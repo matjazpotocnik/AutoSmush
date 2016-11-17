@@ -1,16 +1,13 @@
+/*
 *, *:before, *:after {
     -moz-box-sizing: border-box;
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
 }
+*/
 
 #progressbar {
     display: none;
-}
-
-img.mfp-img {
-    min-width: 400px;
-    height: auto;
 }
 
 progress,
@@ -48,7 +45,6 @@ progress,
 #result a:hover {
     background: rgba(0, 0, 0, 0.05);
 }
-
 #result a:before {
     content: "\f00c";
     position: absolute;
@@ -118,12 +114,10 @@ progress::-webkit-progress-bar {
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) inset;
     border-radius: 3px;
 }
-
 progress::-webkit-progress-value {
     background: #3EB998;
     border-radius: 3px;
 }
-
 progress::-moz-progress-bar {
     background: #3EB998;
     border-radius: 3px;
@@ -132,19 +126,15 @@ progress::-moz-progress-bar {
 progress.error::-moz-progress-bar {
     background: #a00;
 }
-
 progress.error::-webkit-progress-bar {
     background: #a00;
 }
-
 progress.error + #percent {
     color: #fff;
 }
-
 progress.error::-webkit-progress-value {
     background: #600;
 }
-
 progress.error::-moz-progress-bar {
     background: #600;
 }
@@ -161,4 +151,17 @@ progress.error::-moz-progress-bar {
 #cancel_all.cancel_all_unhide {
     display: block;
     margin-left: -.5em;
+}
+
+img.mfp-img {
+    min-width: 400px;
+    height: auto;
+}
+
+.InputfieldForm .inputError {
+    color: #d94C51;
+    background-color: #d94C51;
+}
+.InputfieldForm label.InputfieldHeader {
+    padding-top: .4em;
 }

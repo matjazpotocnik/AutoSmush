@@ -8,7 +8,7 @@ $(document).ready(function () {
 
     var pwasBtn = "#optimize_all";
     var pwcancelBtn = "#cancel_all";
-    var moduleForm = "#ModuleEditForm";
+    var moduleForm = "#ModuleEditForm #Inputfield_bulkoptimize_fieldset input";
     // if using localtools, 150 ms is a good number for pollTime, so there is little chance to miss a file
     // could it be set up higher, like 1000, if you are using online tools like resmush.it
     var pollTime = 150;
@@ -33,20 +33,18 @@ $(document).ready(function () {
     $(pwasBtn).button();
 
     // disable bulk optimize button if module settings were changed
-    $(moduleForm).on("change", function () {
-
+    $(moduleForm).on("change input", function () {
         if (!$(pwasBtn).length) {
             return false;
         }
 
         var wrapper = progressBar.parents(".InputfieldContent");
-
-        wrapper.fadeOut(200, function () {
-            progressBar.prev().html(pwasMsg.saveFirst);
+        wrapper.fadeOut(100, function () {
+            $(pwasBtn).text(pwasMsg.saveFirst);
             $(pwasBtn).button("disable");
-            $(moduleForm).off("change");
+            $(moduleForm).off("change input");
         });
-        wrapper.fadeIn(200);
+        wrapper.fadeIn(100);
     });
 
     $(pwcancelBtn).on("click", function (e) {
@@ -79,17 +77,21 @@ $(document).ready(function () {
                 cache: false,
                 success: function (data) {
                     var status = "";
-
+                    // if optimize engine is not selected
+                    if (data && data.error !== "" && data.file === "ERROR") {
+                        resultElement.html("<span class='status error'>" + data.error + "</span>");
+                        return false;
+                    }
                     if (data && data.file && previousFile !== data.file) {
 
-                        if (data.error_api) { // not present or null
+                        if (data.error_api) {
                             status = "<span class='status error api'>" + data.error_api + "</span>";
-                        } else if (data.error) { // not present or null
+                        } else if (data.error) {
                             status = "<span class='status error'>" + data.error + "</span>";
-                        } else if (data.percentComplete) { // do we need else if statement here?
+                        } else if (data.percentComplete) {
                             status = "<span class='status percent'>" + data.percentNew + "</span>";
                             if (data.percentComplete !== "100") {
-                                percentElement.html(data.counter); // added counter
+                                percentElement.html(data.counter);
                             }
                             progressBar.attr("value", data.percentComplete);
                         }
@@ -97,6 +99,7 @@ $(document).ready(function () {
                         resultElement.html(
                             resultElement.html() + "<a href='" + data.url + "' target='_blank'><span class='faded'>" + data.basedir + "</span><span class='file'>" + data.file + "</span>" + status + "</a>"
                         );
+                        resultElement.scrollTop(resultElement[0].scrollHeight - resultElement.height()); // scroll to bottom
 
                         previousFile = data.file;
                     }
@@ -111,6 +114,24 @@ $(document).ready(function () {
         }
 
         e.preventDefault();
+
+        var bulkEngine = $("#wrap_optBulkEngine");
+        if (bulkEngine.find("input:checked").length === 0) {
+            bulkEngine.addClass("inputError");
+            setTimeout(function () {
+                bulkEngine.removeClass("inputError");
+            }, 2000);
+            return false;
+        }
+
+        var bulkAction = $("#wrap_optBulkAction");
+        if (bulkAction.find("input:checked").length === 0) {
+            bulkAction.addClass("inputError");
+            setTimeout(function () {
+                bulkAction.removeClass("inputError");
+            }, 2000);
+            return false;
+        }
 
         if (window.confirm(pwasMsg.confirm) === false) {
             return false;
@@ -129,9 +150,9 @@ $(document).ready(function () {
         $.ajax({
             url: dataUrl,
             cache: false,
-            success: function () { //done
+            success: function (/*data*/) { // done
                 clearInterval(window.progressInterval);
-                checkProgress();//to display last result
+                checkProgress(); // to display last result
                 if (canceled) {
                     progressBar.addClass("canceled");
                 } else {
@@ -142,9 +163,9 @@ $(document).ready(function () {
                 }
                 return false;
             },
-            error: function () { //fail
+            error: function () { // fail
                 clearInterval(window.progressInterval);
-                checkProgress(); //to display last result
+                checkProgress(); // to display last result
                 percentElement.html(percentElement.html() + " " + pwasMsg.error);
                 return false;
             }
