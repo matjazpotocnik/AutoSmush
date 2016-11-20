@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.0.3 (2016-11-20)
+- attempt to fix a bug that prevented uploading images to Pagefile
+
 ### 1.0.2 (2016-11-19)
 - support for CroppableImage3
 

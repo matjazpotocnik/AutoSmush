@@ -30,8 +30,8 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.0.2',
-			'summary'  => 'Optimize images.',
+			'version'  => '1.0.3',
+			'summary'  => 'Optimize images',
 			'href'     => '',
 			'icon'     => 'leaf',
 			'singular' => true,
@@ -239,10 +239,13 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	public function optimizeOnUpload($event) {
 		$img = $event->argumentsByName('pagefile');
+		
+		if(!$img instanceof Pageimage) return;
 
 		// ensure only images are optimized
 		if(!in_array($img->ext, $this->allowedExtensions)) {
-			return false;
+			return;
+			//return false;
 		}
 
 		// make a backup
@@ -432,7 +435,14 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 		$selector = "type=FieldtypeImage";
 		if(wire('modules')->isInstalled('FieldtypeCroppableImage3')) $selector .= "|FieldtypeCroppableImage3";
-
+		/*
+		// returns all Fields that extend FieldtypeImage, but without FieldtypeFile
+		$img = new Field();
+		$img->type = $modules->get("FieldtypeImage");
+		$fieldtypes = $img->type->getCompatibleFieldtypes($img)->getItems();
+		unset($fieldtypes["FieldtypeFile"]);
+		$selector = "type=" . implode("|",array_keys($fieldtypes));
+		*/
 		foreach (wire('fields')->find($selector) as $f) {
 			foreach (wire('pages')->find("$f>0, include=all") as $p) {
 				$images = $p->getUnformatted($f->name);
@@ -484,7 +494,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	/**
 	 * Optimize image
 	 *
-	 * @param Pageimage $img Page image object
+	 * @param Pageimage $img Pageimage object
 	 * @param boolean $force true, when you want to force optimize the image
 	 * @param string $mode 'auto', 'manual' or 'bulk'
 	 * @param int|null $counter used when called from bulkOptimize(), current image number
@@ -495,7 +505,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	public function optimize($img, $force = false, $mode = 'auto', $counter = null, $total = 1, $error = null) {
 
-		if(!$img instanceof Pageimage) throw new WireException('Not an image.');
+		//if(!$img instanceof Pageimage) throw new WireException('Not an image.');
 
 		if (!is_null($error)) {
 			$this->writeProgressFile($this->getProgressFile(), array(
