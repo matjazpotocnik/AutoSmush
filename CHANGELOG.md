@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.0.2 (2016-11-19)
+- support for CroppableImage3
+
 ### 1.0.1 (2016-11-16)
 - options settings
 

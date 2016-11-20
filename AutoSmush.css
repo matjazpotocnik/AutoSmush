@@ -165,3 +165,11 @@ img.mfp-img {
 .InputfieldForm label.InputfieldHeader {
     padding-top: .4em;
 }
+
+#Inputfield_optAutoAction_backup {
+    margin-left: 1.5em;
+}
+
+.optDisabled {
+    color: #bbb;
+}

@@ -5,6 +5,8 @@
 */
 $(document).ready(function () {
     "use strict";
+    
+    // for PW before 3.0.17
     $(document).on("click", "a.InputfieldImageOptimize", function (e) {
         e.preventDefault();
         var currentItem = $(this);
@@ -45,6 +47,7 @@ $(document).ready(function () {
         });
     });
 
+    // finds all selected variations and optimize them in ajax calls
     $(document).on("click", "button.InputfieldOptimizeVariants", function () {
         var currentItem = parent.$("div.ui-dialog-buttonset").find("button:eq(0)"); //first button
         var optUrl = $(this).attr("data-href"); //button data-href

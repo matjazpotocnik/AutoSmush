@@ -9,9 +9,9 @@ $(document).ready(function () {
     var pwasBtn = "#optimize_all";
     var pwcancelBtn = "#cancel_all";
     var moduleForm = "#ModuleEditForm #Inputfield_bulkoptimize_fieldset input";
-    // if using localtools, 150 ms is a good number for pollTime, so there is little chance to miss a file
+    // if using localtools, 100-150 ms is a good number for pollTime, so there is little chance to miss a file
     // could it be set up higher, like 1000, if you are using online tools like resmush.it
-    var pollTime = 150;
+    var pollTime = 100;
     var dataUrl = $(pwasBtn).data("url");
     var progressUrl = $(pwasBtn).data("progressUrl");
     var cancelUrl = $(pwcancelBtn).data("url");
@@ -31,6 +31,30 @@ $(document).ready(function () {
 
     $(pwasBtn + " span").removeClass();
     $(pwasBtn).button();
+
+    // backup checkbox is active only if optimize originals is checked
+    var chkboxOptOrig = $("#Inputfield_optAutoAction_optimize_originals");
+    var chkboxOptBackup = $("#Inputfield_optAutoAction_backup");
+    var chkboxOptBackuplabel = $(".Inputfield_optAutoAction label:eq(2)");
+
+    if (!chkboxOptOrig.is(":checked")) {
+        chkboxOptBackuplabel.addClass("optDisabled");
+    }
+
+    chkboxOptOrig.on("click", function () {
+        var checked = $(this).is(":checked");
+        if (checked) {
+            chkboxOptBackuplabel.removeClass("optDisabled");
+        } else {
+            chkboxOptBackuplabel.addClass("optDisabled");
+        }
+    });
+
+    chkboxOptBackup.on("click", function (e) {
+        if (!chkboxOptOrig.is(":checked")) {
+            e.preventDefault();
+        }
+    });
 
     // disable bulk optimize button if module settings were changed
     $(moduleForm).on("change input", function () {
