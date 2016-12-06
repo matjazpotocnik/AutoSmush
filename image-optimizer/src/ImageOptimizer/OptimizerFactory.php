@@ -39,6 +39,7 @@ class OptimizerFactory
         $resolver = new OptionsResolver();
         $resolver->setDefaults(array(
             'ignore_errors' => true,
+            'execute_first' => false,
             'optipng_options' => array('-i0', '-o2', '-quiet'),
             'pngquant_options' => array('--force'),
             'pngcrush_options' => array('-reduce', '-q', '-ow'),
@@ -87,11 +88,11 @@ class OptimizerFactory
             new Command($this->executable('advpng'), $this->options['advpng_options'])
         ));
         $this->optimizers['png'] = new ChainOptimizer(array(
+            $this->optimizers['optipng'], //MP reversed the order so optipng is first
             $this->optimizers['pngquant'],
-            $this->optimizers['optipng'],
             $this->optimizers['pngcrush'],
             $this->optimizers['advpng']
-        ));
+        ), $this->options['execute_first']); //MP if true, just first optimizer will run, if false all optimizers will run
 
         $this->optimizers['gif'] = $this->optimizers['gifsicle'] = $this->wrap(new CommandOptimizer(
             new Command($this->executable('gifsicle'), $this->options['gifsicle_options'])
@@ -107,10 +108,9 @@ class OptimizerFactory
             }
         ));
         $this->optimizers['jpeg'] = $this->optimizers['jpg'] = new ChainOptimizer(array(
-            $this->unwrap($this->optimizers['jpegoptim']), //MP returned the order so jpegoptim is first
+            $this->unwrap($this->optimizers['jpegoptim']), //MP reversed the order so jpegoptim is first
             $this->unwrap($this->optimizers['jpegtran']),
-        //)); 
-        ), true); //MP if you remove true, both optimizers will run
+        ), $this->options['execute_first']); //MP if true, just first optimizer will run, if false all optimizers will run
 
         $this->optimizers[self::OPTIMIZER_SMART] = $this->wrap(new SmartOptimizer(array(
             TypeGuesser::TYPE_GIF => $this->optimizers['gif'],

@@ -19,9 +19,9 @@ final class Command
     }
 
     public function execute(array $customArgs = array())
-    {
+    {    		
         if(!is_executable($this->cmd)) {
-            throw new CommandNotFound(sprintf('Command "%s" not found.', $this->cmd));
+            throw new CommandNotFound(sprintf('Optimizer "%s" not found.', $this->cmd));
         }
 
         $args = array_merge($this->args, $customArgs);
@@ -36,7 +36,7 @@ final class Command
             $escapeShellCmd = 'escapeshellcmd';
         }
 
-        $command = $escapeShellCmd($this->cmd).' '.implode(' ', array_map('escapeshellarg', $args)).$suppressOutput;
+        $command = $escapeShellCmd($this->cmd).' '.implode(' ', array_map($escapeShellCmd, $args)).$suppressOutput;
 
         exec($command, $output, $result);
 

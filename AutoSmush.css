@@ -173,3 +173,7 @@ img.mfp-img {
 .optDisabled {
     color: #bbb;
 }
+
+#ModuleEditForm .AdminDataTable tr td:first-child {
+  color: inherit;
+}

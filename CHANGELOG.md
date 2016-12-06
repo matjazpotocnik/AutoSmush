@@ -1,5 +1,8 @@
 # Changelog
 
+- add info about local optimizers
+- add more paths to serach for local optimizers
+
 ### 1.0.3 (2016-11-20)
 - attempt to fix a bug that prevented uploading images to Pagefile
 
