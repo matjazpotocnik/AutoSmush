@@ -55,22 +55,22 @@ Optimized cropped/resized images (variations).
 Currently there are two methods available to optimize the image:
 
 - **reShmush.it online service**
-It's a free (at the moment) thirda part tool that provides an online way to optimize images. This
+It's a free (at the moment) third party tool that provides an online way to optimize images. This
 tool is based on several well-known algorithms such as pngquant, jpegoptim, optipng. After you
 upload the image to your web server, it is then uploaded to the reSmush.it web server where it is
 processed and then optimized image is downloaded. It takes time for all this uploading/downloading
-to finish, sit & wait :) There is a 5 MB file upload limit and no limit on number of uploaded
-images. I don't suggest it for processing private material.
+to finish if your imageas are large. There is a 5 MB file upload limit and no limit on number of
+uploaded images. I don't suggest it for processing private material.
 - **local tools**
-Images are processed locally by [Image Optimizer](https://github.com/psliwa/image-optimizer), a
-bundled PHP library that, in turn, uses executables on your web server for optimizing images:
-pngquant, pngcrush, pngout, advpng, gifsicle, jpegoptim, jpegtran. Autosmush is using just three:
-jpegoptim for jpgs, optipng for pngs and gifsicle for gifs. Images are thus processed on the web
-server and are not uploaded to some online service. Binaries for Windows are provided with this
-module in windows_binaries folder, on unix system the binaries can be installed using apt-get
-install command or by building it from sources: [jpegoptim][1], [optipng][2], [gifsicle][3].
-You need PHP with enabled/allowed exec() function. In shared environments this function is mostly
-disabled/forbidden if php runs as a module, but is allowed if php is running as (fast)CGI.
+Images are processed locally by [Image Optimizer](https://github.com/psliwa/image-optimizer), a bundled PHP library that, in turn, uses 
+executables on your web server for optimizing images: pngquant, pngcrush, pngout, advpng,
+gifsicle, jpegoptim, jpegtran. Autosmush is using just three: jpegoptim for jpgs, optipng for pngs
+and gifsicle for gifs. Images are thus processed on the web server and are not uploaded to some
+online service. Binaries for Windows are provided with this module in windows_binaries folder, on
+unix system the binaries can be installed using apt-get install command or by building it from
+sources: [jpegoptim][1], [optipng][2], [gifsicle][3]. You need PHP with enabled/allowed exec() function.
+In shared environments this function is mostly disabled/forbidden if php runs as a module,
+but is allowed if php is running as (fast)CGI.
 
 ### Compression level
 Image compression level can be set in **JPG quality** setting. It's applied to reSmush.it (for all
@@ -92,6 +92,6 @@ Support: https://processwire.com/talk/topic/14818-auto-smush/
 
 Licensed under the MIT license. See the LICENSE file for details.
 
-http://freecode.com/projects/jpegoptim/
-http://optipng.sourceforge.net/
-http://www.lcdf.org/gifsicle/
+[1]: http://freecode.com/projects/jpegoptim/
+[2]: http://optipng.sourceforge.net/
+[3]: http://www.lcdf.org/gifsicle/
