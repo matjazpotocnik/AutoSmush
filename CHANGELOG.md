@@ -1,5 +1,7 @@
 # Changelog
 
+### 1.0.4 (2016-12-06)
+- remove dom php extension dependency
 - add info about local optimizers
 - add more paths to serach for local optimizers
 

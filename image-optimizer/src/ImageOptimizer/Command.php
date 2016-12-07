@@ -20,6 +20,8 @@ final class Command
 
     public function execute(array $customArgs = array())
     {    		
+    		if($this->cmd == '') return;
+    	
         if(!is_executable($this->cmd)) {
             throw new CommandNotFound(sprintf('Optimizer "%s" not found.', $this->cmd));
         }
