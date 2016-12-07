@@ -2,7 +2,7 @@
 
 // Image optimizer: https://github.com/psliwa/image-optimizer
 //require_once __DIR__ . '/image-optimizer/vendor/autoload.php';
-require_once /*NoCompile*/__DIR__ . './ImageOptimizer.php';
+require_once /*NoCompile*/__DIR__ . '/ImageOptimizer.php';
 
 /**
  * AutoSmush
