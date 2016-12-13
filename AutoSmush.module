@@ -8,7 +8,7 @@ require_once /*NoCompile*/__DIR__ . '/ImageOptimizer.php';
  * AutoSmush
  * Optimize images
  *
- * @version 1.0.4
+ * @version 1.0.5
  * @author Roland Toth (tpr)
  * @author Matjaz Potocnik (matjazp)
  * @link https://github.com/matjazpotocnik/AutoSmush
@@ -31,7 +31,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.0.4',
+			'version'  => '1.0.5',
 			'summary'  => 'Optimize images',
 			'href'     => '',
 			'icon'     => 'leaf',
@@ -46,7 +46,6 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	const WEBSERVICE = 'http://api.resmush.it/ws.php?img=';
 	const API_SIZELIMIT = 5242880; // 5 MB limit
-	//const API_ALLOWED_EXTENSIONS = 'png, jpg, jpeg, gif, bmp, tif';
 	const API_ALLOWED_EXTENSIONS = 'png, jpg, jpeg, gif';
 	const JPG_QUALITY_DEFAULT = '90';
 	const CONNECTION_TIMEOUT = 30; // for large images and slow connection 30 sec might not be enough
@@ -689,6 +688,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			//$optimizer = $factory->get('jpegoptim');
 
 			try {
+				// optimizer will throw exceptions if none of the optimizers in chain is not found
 				$optimizer->optimize($img->filename);  // optimized file overwrites original!
 			} catch (Exception $e) {
 				$error = $e->getMessage();
@@ -706,6 +706,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			clearstatcache(true, $img->filename);
 			$dest_size = filesize($img->filename);
 			$percentNew = 100 - (int) ($dest_size / $src_size * 100);
+
 		} else {
 			// no engine selected
 			$opt = "No engine selected ($mode). ";
@@ -740,7 +741,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	public function getModuleConfigInputfields(array $data) {
 
-		$fields = new InputfieldWrapper(); //$this->wire(new InputfieldWrapper());
+		$fields = $this->wire(new InputfieldWrapper());
 		$modules = $this->wire('modules');
 		//$data = array_merge(self::$defaultConfig, $data);
 
@@ -799,8 +800,8 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$field->name          = 'optManualAction';
 		$field->label         = __('Action');
 		$field->columnWidth   = 38;
-		$field->addOption('optimize_originals',  __('Add button/link to image edit page'));
-		$field->addOption('optimize_variations', __('Add button to variations modal'));
+		$field->addOption('optimize_originals',  __('Add optimize button/link to page edit'));
+		$field->addOption('optimize_variations', __('Add optimize button to variations modal'));
 		$field->value         = isset($data['optManualAction']) ? $data['optManualAction'] : array('optimize_originals', 'optimize_variations');
 		$fieldset->add($field);
 
@@ -889,8 +890,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		// local tools info
 		$fieldset = $modules->get('InputfieldFieldset');
 		$fieldset->name = 'localoptimizers_fieldset';
-		$fieldset->label = __('Local tools optimizers info');
-		$fieldset->description = __('Show optimizer executables');
+		$fieldset->label = __('Advanced options for local optimization tools');
 		$fieldset->collapsed = Inputfield::collapsedYes;
 		$fields->add($fieldset);
 
@@ -909,6 +909,14 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		//$field->skipLabel = true;
 		$field->label = __('Search path');
 		$field->value = '<p>' . $this->findPaths() . '</p>' . $table->render();
+		$fieldset->add($field);
+
+		$field = $modules->get('InputfieldCheckbox');
+		$field->name = 'optChain';
+		$field->label = __('Enable optimizers chaining');
+		$field->description = __('If unchecked, only the first available optimizer for specific image type will run (default). If checked, all available optimizers will run one after another.');
+		$field->value = isset($data['optChain']) ? $data['optChain'] : '';
+		$field->checked = ($field->value == 1) ? 'checked' : '';
 		$fieldset->add($field);
 
 		return $fields;
@@ -934,7 +942,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	private function getProgressFile($url = false) {
 		$mode = ($url === true) ? 'urls' : 'paths';
-		return wire('config')->$mode->assets . strtolower(__CLASS__) . '/progress.json';
+		return $this->wire('config')->$mode->assets . strtolower(__CLASS__) . '/progress.json';
 	}
 
 	/**
@@ -946,7 +954,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	private function getCancelFile($url = false) {
 		$mode = ($url === true) ? 'urls' : 'paths';
-		return wire('config')->$mode->assets . strtolower(__CLASS__) . '/cancel.json';
+		return $this->wire('config')->$mode->assets . strtolower(__CLASS__) . '/cancel.json';
 	}
 
 	/**
@@ -1018,9 +1026,8 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$mode = $input->get('mode');
 
 		$this->checkOptimizers();
-		foreach($this->optimizers as $optimizer => $path) {
-			$this->optimizeSettings[$optimizer . '_bin'] = $path;
-		}
+		foreach($this->optimizers as $optimizer => $path) $this->optimizeSettings[$optimizer . '_bin'] = $path;
+		if(isset($this->configData['optChain']) && $this->configData['optChain'] == 1) $this->optimizeSettings['execute_first'] = false;
 
 		if($input->get('name') === __CLASS__) {
 			$this->wire('modules')->get('JqueryMagnific');
@@ -1058,6 +1065,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		// optimize images in auto mode on upload
 		if(isset($this->configData['optAutoAction']) && in_array('optimize_originals', $this->configData['optAutoAction'])) {
 			$this->addHookBefore('InputfieldFile::fileAdded', $this, 'optimizeOnUpload');
+			$config->js('AutoSmush', __('Optimizing'));
 			// delete backup copy - maybe this should run in all cases?
 			if(isset($this->configData['optAutoAction']) && in_array('backup', $this->configData['optAutoAction'])) {
 				$this->addHookAfter('InputfieldFile::processInputDeleteFile', $this, 'deleteBackup');
@@ -1069,7 +1077,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			(in_array('optimize_variations', $this->configData['optAutoAction']) || in_array('optimize_variationsCI3', $this->configData['optAutoAction']))) {
 			$this->addHookAfter('ImageSizer::resize', $this, 'checkOptimizeNeeded');
 			$this->addHookAfter('Pageimage::size', $this, 'optimizeOnResize');
-			if(wire('modules')->isInstalled('FieldtypeCroppableImage3') && in_array('optimize_variationsCI3', $this->configData['optAutoAction'])) {
+			if($this->wire('modules')->isInstalled('FieldtypeCroppableImage3') && in_array('optimize_variationsCI3', $this->configData['optAutoAction'])) {
 				$this->addHookAfter('ProcessCroppableImage3::executeSave', $this, 'optimizeOnResizeCI3');
 			}
 		}
