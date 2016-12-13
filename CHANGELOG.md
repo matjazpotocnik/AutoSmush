@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.0.5 (2016-12-13)
+- optimizers chaining
+
 ### 1.0.4 (2016-12-06)
 - remove dom php extension dependency
 - add info about local optimizers

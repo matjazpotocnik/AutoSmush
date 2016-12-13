@@ -5,7 +5,7 @@
 */
 $(document).ready(function () {
     "use strict";
-    
+
     // for PW before 3.0.17
     $(document).on("click", "a.InputfieldImageOptimize", function (e) {
         e.preventDefault();
@@ -93,15 +93,15 @@ $(document).ready(function () {
                 }
             });
         });
-
-        /*
-        $(this).on("click", function () {
-            //reload iframe
-            $("iframe").attr("src", function (i, val) {
-                return val;
-            });
-        });
-        */
     });
+
+    // adds Optimizing text to the spinner
+    if(config.AutoSmush) {
+        $(document).on("change", '.InputfieldImage' ,function () {
+            var spinner = $(this).find(".gridImage__resize");
+            //console.log(spinner.html());
+            spinner.html("<i class='fa fa-spinner fa-spin fa-2x fa-fw'></i><span style='font-size:14px'> " + config.AutoSmush + "</span>");
+        });
+    }
 
 });
