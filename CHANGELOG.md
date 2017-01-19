@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.0.6 (2017-01-19)
+- bug fix
+
 ### 1.0.5 (2016-12-13)
 - optimizers chaining
 

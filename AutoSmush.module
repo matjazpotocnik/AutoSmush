@@ -31,7 +31,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.0.5',
+			'version'  => '1.0.6',
 			'summary'  => 'Optimize images',
 			'href'     => '',
 			'icon'     => 'leaf',
@@ -741,7 +741,8 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	public function getModuleConfigInputfields(array $data) {
 
-		$fields = $this->wire(new InputfieldWrapper());
+		//$fields = $this->wire(new InputfieldWrapper());
+		$fields = new InputfieldWrapper();
 		$modules = $this->wire('modules');
 		//$data = array_merge(self::$defaultConfig, $data);
 
