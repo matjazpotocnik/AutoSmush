@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.0.7 (2017-03-06)
+- support for AdminThemeUikit
+
 ### 1.0.6 (2017-01-19)
 - bug fix
 
@@ -9,7 +12,7 @@
 ### 1.0.4 (2016-12-06)
 - remove dom php extension dependency
 - add info about local optimizers
-- add more paths to serach for local optimizers
+- add more paths to search for local optimizers
 
 ### 1.0.3 (2016-11-20)
 - attempt to fix a bug that prevented uploading images to Pagefile

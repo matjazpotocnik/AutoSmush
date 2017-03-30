@@ -153,6 +153,23 @@ progress.error::-moz-progress-bar {
     margin-left: -.5em;
 }
 
+.AdminThemeUikit #cancel_all.cancel_all_unhide {
+    margin-left: 0;
+}
+
+.AdminThemeUikit progress, .AdminThemeUikit #result {
+    border-radius: 0;
+}
+
+.AdminThemeUikit #progbarwrapper .InputfieldContent {
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.AdminThemeUikit #percent {
+    top: -36px;
+}
+
 img.mfp-img {
     min-width: 400px;
     height: auto;

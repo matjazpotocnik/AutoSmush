@@ -11,7 +11,8 @@ $(document).ready(function () {
     var moduleForm = "#ModuleEditForm #Inputfield_bulkoptimize_fieldset input";
     // if using localtools, 100-150 ms is a good number for pollTime, so there is little chance to miss a file
     // could it be set up higher, like 1000, if you are using online tools like resmush.it
-    var pollTime = 100;
+    //var pollTime = 100;
+    var pollTime = parseInt($(pwasBtn).data("poll"));
     var dataUrl = $(pwasBtn).data("url");
     var progressUrl = $(pwasBtn).data("progressUrl");
     var cancelUrl = $(pwcancelBtn).data("url");
@@ -187,10 +188,10 @@ $(document).ready(function () {
                 }
                 return false;
             },
-            error: function () { // fail
+            error: function (jqXHR, textStatus, errorThrown) { // fail
                 clearInterval(window.progressInterval);
                 checkProgress(); // to display last result
-                percentElement.html(percentElement.html() + " " + pwasMsg.error);
+                percentElement.html(percentElement.html() + " " + pwasMsg.error + textStatus);
                 return false;
             }
         });

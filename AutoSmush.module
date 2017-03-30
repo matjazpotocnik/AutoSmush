@@ -31,7 +31,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.0.6',
+			'version'  => '1.0.7',
 			'summary'  => 'Optimize images',
 			'href'     => '',
 			'icon'     => 'leaf',
@@ -121,7 +121,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		self::$messages = array(
 			'start'            => __('Starting...'),
 			'complete'         => __('All done'),
-			'error'            => __('An error occured, please try again'),
+			'error'            => __('An error occurred, please try again'),
 			'error_read_file'  => __('Error reading file'),
 			'error_write_file' => __('Error writing file'),
 			'save_first'       => __('Module settings have been modified, please save first'),
@@ -159,6 +159,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'401' => __('impossible to fetch the image from URL (usually a local URL)'),
 			'402' => __('impossible to fetch the image from $_FILES (usually a local URL)'),
 			'403' => __('forbidden file format provided. Works strictly with jpg, png, gif, tif and bmp files.'),
+			'404' => __('request timeout'),
 			'501' => __('internal error, cannot create a local copy'),
 			'502' => __('image provided too large (must be below 5MB)'),
 			'503' => __('internal error, could not reach remote reSmush.it servers for image optimization'),
@@ -328,7 +329,11 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			// new version with button
 			// there is also InputfieldImage::renderButtons hook
 			$link = "<a href='$url&var=1' title='$title'>$text</a>";
-			$b  = "<button type='button' data-href='$url' class='InputfieldImageOptimize1 ui-button ui-corner-all ui-state-default'>";
+			if($this->wire('user')->admin_theme == 'AdminThemeUikit') {
+				$b  = "<button type='button' data-href='$url' class='InputfieldImageOptimize1 uk-button uk-button-text uk-margin-right'>";
+			} else {
+				$b  = "<button type='button' data-href='$url' class='InputfieldImageOptimize1 ui-button ui-corner-all ui-state-default'>";
+			}
 			$b .= "<span class='ui-button-text'><span class='fa fa-leaf'></span><span> $text</span></span></button>";
 			if(stripos($event->return, '</small>')) { // insert button right before </small> as the last (third) button, after Crop and Variations buttons
 				$event->return = str_replace('</small>', $b . '</small>', $event->return);
@@ -360,6 +365,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$b->attr('style', 'display:none');
 
 		$needle = "<ul class='Inputfields'>";
+		if($this->wire('user')->admin_theme == 'AdminThemeUikit') $needle = "<ul class='Inputfields uk-grid-collapse' uk-grid>";
 		if(stripos($event->return, $needle)) {
 			$event->return = str_replace($needle, $needle . $b->render(), $event->return);
 		}
@@ -387,7 +393,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			exit(0);
 		}
 
-		// it doesn't work with CroppableImage3
+		// this doesn't work with CroppableImage3
 		//$img = wire('modules')->get('ProcessPageEditImageSelect')->getPageImage($getVariations);
 
 		$myimage = null;
@@ -631,7 +637,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			if(is_bool($data)) {
 				$error = 'Error optimizing ' . $img->filename . ', ';
 				$error .= $data === true ? 'request timeout' : $http->getHttpCode(true);
-				$this->log->save($opt . $error);
+				$this->log->save($opt . $error . ' (possible request timeout)');
 				return false;
 			}
 
@@ -645,16 +651,16 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 			// write api error from webservice to json and log file
 			if(isset($response->error)) {
-				$error = isset($this->apiErrorCodes[$response->error]) ? ucfirst($this->apiErrorCodes[$response->error]) : $response->error;
+				$error = isset($this->apiErrorCodes[$response->error]) ? $this->apiErrorCodes[$response->error] : $response->error;
 				$this->writeProgressFile($this->getProgressFile(), array(
-					'error_api' => $error,
+					'error_api' => ucfirst($error),
 					'percentComplete' => (int) ($counter / $total * 100) . "", //type casting
 					'file' => $img->basename,
 					'basedir' => basename(dirname($img->filename)),
 					'url' => $img->httpUrl
 				));
 				$error = 'Error optimizing ' . $img->filename . ', ' . $error;
-				$this->log->save($error);
+				$this->log->save($opt . $error);
 				return false;
 			}
 
@@ -857,8 +863,10 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$field->label         = __('Bulk optimize');
 		$field->icon          = 'coffee';
 		$field->description   = __('Click the button below to process all images sitewide.');
-		$field->value         = '<p class="description" style="margin-bottom:0;margin-top:-1em"><strong>' .
-														__('WARNING: this CPU intensive process may take a while to finish, especially if you are using online service!') .
+		//$field->value         = '<p class="description" style="margin-bottom:0;margin-top:-1em"><strong>' .
+		$field->value         = '<p class="description"><strong>' .
+														__('WARNING: Using local optimization tools is CPU intensive process. ') .
+														__('Running bulk optimize on large amount of images may take a while to finish and script may timeout!') .
 														'</strong></p>';
 
 			$field_button         = $modules->get('InputfieldButton');
@@ -870,6 +878,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			$field_button->attr('data-error-msg', $this->getMessage('error'));
 			$field_button->attr('data-confirm-msg', $this->getMessage('confirm'));
 			$field_button->attr('data-save-first-msg', $this->getMessage('save_first'));
+			$field_button->attr('data-poll', ($data['optBulkEngine'] == 'resmushit') ? '500' : '100');
 			$field_button->value  = __('Start bulk image optimize');
 			$field->add($field_button);
 
