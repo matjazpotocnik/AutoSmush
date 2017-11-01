@@ -11,7 +11,8 @@ $(document).ready(function () {
         e.preventDefault();
         var currentItem = $(this);
         var optUrl = currentItem.attr("href");
-        currentItem.html("Optimizing <i class='fa fa-spin fa-spinner fa-fw'></i>");
+        //currentItem.html("Optimizing <i class='fa fa-spin fa-spinner fa-fw'></i>");
+        currentItem.html($(this).attr("data-optimizing") + " <i class='fa fa-spin fa-spinner fa-fw'></i>");
 
         $.ajax({
             url: optUrl,
@@ -31,7 +32,7 @@ $(document).ready(function () {
         var currentItem = $(this);
         var optUrl = currentItem.attr("data-href");
         var optText = currentItem.find("span:eq(2)"); //third span
-        optText.html(" Optimizing <i class='fa fa-spin fa-spinner fa-fw'></i>");
+        optText.html(" " + $(this).attr("data-optimizing") + " <i class='fa fa-spin fa-spinner fa-fw'></i>");
 
         $.ajax({
             url: optUrl,

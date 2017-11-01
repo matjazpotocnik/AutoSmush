@@ -1,5 +1,9 @@
 # Changelog
 
+### 1.1.0 (2017-08-30)
+- bulk mode works on unlimited number of images 
+- optimizing disabled in demo mode
+
 ### 1.0.7 (2017-03-06)
 - support for AdminThemeUikit
 

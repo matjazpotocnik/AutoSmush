@@ -1,14 +1,12 @@
 <?php
 
-// Image optimizer: https://github.com/psliwa/image-optimizer
-//require_once __DIR__ . '/image-optimizer/vendor/autoload.php';
 require_once /*NoCompile*/__DIR__ . '/ImageOptimizer.php';
 
 /**
  * AutoSmush
  * Optimize images
  *
- * @version 1.0.5
+ * @version 1.1.0
  * @author Roland Toth (tpr)
  * @author Matjaz Potocnik (matjazp)
  * @link https://github.com/matjazpotocnik/AutoSmush
@@ -31,9 +29,11 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.0.7',
-			'summary'  => 'Optimize images',
-			'href'     => '',
+			'version'  => '1.1.0',
+			'summary'  => 'Optimize/compress images automatically on upload, resize and crop, ' .
+									  'manually by clicking the button or link for each image or variation, ' .
+									  'and in bulk mode for all images sitewide.',
+			'href'     => 'https://processwire.com/talk/topic/14818-auto-smush/',
 			'icon'     => 'leaf',
 			'singular' => true,
 			'autoload' => true
@@ -44,7 +44,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 * Module configuraton values
 	 *
 	 */
-	const WEBSERVICE = 'http://api.resmush.it/ws.php?img=';
+	const WEBSERVICE = 'http://api.resmush.it/ws.php?exif=true&img=';
 	const API_SIZELIMIT = 5242880; // 5 MB limit
 	const API_ALLOWED_EXTENSIONS = 'png, jpg, jpeg, gif';
 	const JPG_QUALITY_DEFAULT = '90';
@@ -64,7 +64,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	protected $optimizeSettings = array();
 
 	/**
-	 * Array of all aoptimizers
+	 * Array of all optimizers
 	 * @var array
 	 */
 	protected $optimizers = array();
@@ -119,14 +119,15 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	public function __construct() {
 
 		self::$messages = array(
-			'start'            => __('Starting...'),
-			'complete'         => __('All done'),
-			'error'            => __('An error occurred, please try again'),
-			'error_read_file'  => __('Error reading file'),
-			'error_write_file' => __('Error writing file'),
-			'save_first'       => __('Module settings have been modified, please save first'),
-			'confirm'          => __('Are you sure to continue?'),
-			'canceled'         => __('Canceled')
+			'start'            => $this->_('Starting...'),
+			'complete'         => $this->_('All done'),
+			'error'            => $this->_('ERROR:'),
+			'save_first'       => $this->_('Module settings have been modified, please save first'),
+			'confirm'          => $this->_('Are you sure to continue?'),
+			'canceled'         => $this->_('Canceled'),
+			'canceling'        => $this->_('Canceling...'),
+			'filelist'         => $this->_('Generating list of images'),
+			'filelistnum'      => $this->_('Number of images: ')
 		);
 
 		$this->optimizers = array(
@@ -155,15 +156,15 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 		// http://resmush.it/api
 		$this->apiErrorCodes = array(
-			'400' => __('no url of image provided'),
-			'401' => __('impossible to fetch the image from URL (usually a local URL)'),
-			'402' => __('impossible to fetch the image from $_FILES (usually a local URL)'),
-			'403' => __('forbidden file format provided. Works strictly with jpg, png, gif, tif and bmp files.'),
-			'404' => __('request timeout'),
-			'501' => __('internal error, cannot create a local copy'),
-			'502' => __('image provided too large (must be below 5MB)'),
-			'503' => __('internal error, could not reach remote reSmush.it servers for image optimization'),
-			'504' => __('internal error, could not fetch picture from remote reSmush.it servers')
+			'400' => $this->_('no url of image provided'),
+			'401' => $this->_('impossible to fetch the image from URL (usually a local URL)'),
+			'402' => $this->_('impossible to fetch the image from $_FILES (usually a local URL)'),
+			'403' => $this->_('forbidden file format provided. Works strictly with jpg, png, gif, tif and bmp files.'),
+			'404' => $this->_('request timeout from reSmush.it'),
+			'501' => $this->_('internal error, cannot create a local copy'),
+			'502' => $this->_('image provided too large (must be below 5MB)'),
+			'503' => $this->_('internal error, could not reach remote reSmush.it servers for image optimization'),
+			'504' => $this->_('internal error, could not fetch image from remote reSmush.it servers')
 		);
 	}
 
@@ -176,11 +177,11 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$cls = strtolower(__CLASS__);
 
 		// pruneBytes returns error in PW prior to 3.0.13 if file does not exist
-		if(!file_exists(wire('log')->getFilename($cls))) {
-			wire('log')->save($cls, 'log file created', array('showUser' => false, 'showURL' => false));
+		if(!file_exists($this->wire('log')->getFilename($cls))) {
+			$this->wire('log')->save($cls, 'log file created', array('showUser' => false, 'showURL' => false));
 		}
 
-		$this->log = new FileLog(wire('log')->getFilename($cls));
+		$this->log = new FileLog($this->wire('log')->getFilename($cls));
 		method_exists($this->log, __CLASS__) ? $this->log->pruneBytes(20000) : $this->log->prune(20000);
 
 		$paths = $this->wire('config')->paths;
@@ -287,7 +288,6 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		if(!in_array($img->ext, $this->allowedExtensions)) return;
 
 		// make a backup
-		//if(isset($this->configData['optAutoPreserve']) && $this->configData['optAutoPreserve'] == 1) {
 		if(isset($this->configData['optAutoAction']) && in_array('backup', $this->configData['optAutoAction'])) {
 			@copy($img->filename, $img->filename . '.autosmush');
 		}
@@ -317,11 +317,12 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 					 "&mode=optimize&id=$id&file=$id,{$file->basename}";
 		$title =  $this->_('Optimize image');
 		$text = $this->_('Optimize');
+		$optimizing = $this->_('Optimizing');
 		if($this->isOptimizedOnUpload) $text = $this->_('Optimized on upload');
 
 		if(stripos($event->return, 'InputfieldFileName')) {
 			// InputfieldFileName class found, used in PW versions up to 3.0.17
-			$link = "<a href='$url' class='InputfieldImageOptimize' title='$title'>$text</a>";
+			$link = "<a href='$url' data-optimizing='$optimizing' class='InputfieldImageOptimize' title='$title'>$text</a>";
 			if(stripos($event->return, '</p>')) { // insert link right before </p>
 				$event->return = str_replace('</p>', $link . '</p>', $event->return);
 			}
@@ -329,11 +330,11 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			// new version with button
 			// there is also InputfieldImage::renderButtons hook
 			$link = "<a href='$url&var=1' title='$title'>$text</a>";
-			if($this->wire('user')->admin_theme == 'AdminThemeUikit') {
-				$b  = "<button type='button' data-href='$url' class='InputfieldImageOptimize1 uk-button uk-button-text uk-margin-right'>";
-			} else {
-				$b  = "<button type='button' data-href='$url' class='InputfieldImageOptimize1 ui-button ui-corner-all ui-state-default'>";
-			}
+			//if($this->wire('user')->admin_theme == 'AdminThemeUikit') {
+			//	$b  = "<button type='button' data-href='$url' data-optimizing='$optimizing' class='InputfieldImageOptimize1 uk-button uk-button-text uk-margin-right'>";
+			//} else {
+				$b  = "<button type='button' data-href='$url' data-optimizing='$optimizing' class='InputfieldImageOptimize1 ui-button ui-corner-all ui-state-default'>";
+			//}
 			$b .= "<span class='ui-button-text'><span class='fa fa-leaf'></span><span> $text</span></span></button>";
 			if(stripos($event->return, '</small>')) { // insert button right before </small> as the last (third) button, after Crop and Variations buttons
 				$event->return = str_replace('</small>', $b . '</small>', $event->return);
@@ -365,38 +366,78 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$b->attr('style', 'display:none');
 
 		$needle = "<ul class='Inputfields'>";
-		if($this->wire('user')->admin_theme == 'AdminThemeUikit') $needle = "<ul class='Inputfields uk-grid-collapse' uk-grid>";
+		//if($this->wire('user')->admin_theme == 'AdminThemeUikit') $needle = "<ul class='Inputfields uk-grid-collapse' uk-grid>";
+		if($this->wire('user')->admin_theme == 'AdminThemeUikit') $needle = "<ul class='Inputfields uk-grid-collapse uk-grid-match' uk-grid uk-height-match='target: > .Inputfield:not(.InputfieldStateCollapsed) > .InputfieldContent'>";
 		if(stripos($event->return, $needle)) {
 			$event->return = str_replace($needle, $needle . $b->render(), $event->return);
 		}
+		//var_dump($event->return);
 	}
 
 	/**
 	 * Process image optimize via ajax request when optimize link/button is clicked
+	 * or in bulk mode
 	 *
 	 * @param bool $getVariations true when optimizing variation, false if original
-	 * @return string
+	 * @return string|json
 	 *
 	 */
 	public function onclickOptimize($getVariations = false) {
 
 		$err = "<i style='color:red' class='fa fa-times-circle'></i>";
 		$input = $this->wire('input');
+		$status = array(
+			'error'           => null, // various errors
+			'error_api'       => null, // erros from reSmush.it
+			'percentNew'      => '0', // reduction percentage
+			'file'            => '', // image name
+			'basedir'         => '', // page id where image is eg. 1234
+			'url'             => '#' // full url to the image
+		);
 
-		$id = (int) $input->get('id');
-		$file = $input->get('file');
+		$file = $input->get('file'); // 1234,image.jpg
+		$id = (int) $input->get('id'); // could also get id from file var
+		$bulk = $input->get('bulk');
+		$m = ($bulk == 1) ? 'bulkOptimize: ' : 'onclickOptimize: ';
 		// $file = $this->wire('sanitizer')->pageNameUTF8($input->get('file'));
-		if(!$id || !$file) {
-			$msg = 'Invalid data';
-			$this->log->save('onclickOptimize:' . $msg);
-			echo $getVariations ? $err : $msg;
+
+		if($this->wire('config')->demo) {
+			$msg = $this->_('Optimization disabled in demo mode!');
+			$this->log->save($m . $msg);
+			if($bulk == 1) {
+				$status['error'] = $msg;
+				header('Content-Type: application/json');
+				echo json_encode($status);
+			} else {
+				echo $getVariations ? $err : $msg;
+			}
 			exit(0);
 		}
+
+		$page = $this->wire('pages')->get($id);
+
+		if(!$id || !$file || !$page->id) {
+			$msg = 'Invalid data!';
+			$this->log->save($m . $msg);
+			if($bulk == 1) {
+				$status['error'] = 'invalid data';
+				header('Content-Type: application/json');
+				echo json_encode($status);
+			} else {
+				echo $getVariations ? $err : $msg;
+			}
+			exit(0);
+		}
+
+
+		$status['file'] = $this->wire('config')->urls->files . $id . '/' . explode(',', $file)[1]; // fake image name
+		$status['basedir'] = $id; // page id where image is eg. 1234
 
 		// this doesn't work with CroppableImage3
 		//$img = wire('modules')->get('ProcessPageEditImageSelect')->getPageImage($getVariations);
 
-		$myimage = null;
+		// old version
+		/*$myimage = null;
 		$page = $this->wire('pages')->get($id);
 		$file = explode(',', $file)[1];
 		$imgs = $this->wire('modules')->get('ProcessPageEditImageSelect')->getImages($page);
@@ -412,40 +453,64 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 				// variation found
 				break;
 			}
-		}
+		}*/
+
+		// new version
+		$myimage = $this->getPageImage($page, true);
 
 		if(!$myimage) {
-			$msg = __('Image not found!');
-			$this->log->save('onclickOptimize:' . $msg . $file);
-			echo $getVariations ? $err : $msg;
+			$file = explode(',', $file)[1];
+			$msg = ' not found!';
+			$this->log->save($m . $file . $msg);
+			if($bulk == 1) {
+				$status['error'] = 'image not found';
+				header('Content-Type: application/json');
+				echo json_encode($status);
+			} else {
+				echo $getVariations ? $err : $msg;
+			}
 			exit(0);
 		}
 
 		$img = $myimage;
 
-		$src_size = (int) filesize($img->filename);
+		$src_size = (int) @filesize($img->filename);
 		if($src_size == 0) {
 			// this shouldn't happen but who knows
-			echo __('Zero file size!');
+			if($bulk == 1) {
+				$status['error'] = 'zero file size';
+				header('Content-Type: application/json');
+				echo json_encode($status);
+			} else {
+				echo 'Zero file size!';
+			}
 			exit(0);
 		}
 
-		if($this->optimize($img, true, 'manual') === false) {
-			$msg = __('Not optimized, check log!');
-			// errors are already logged by optimize method
-			echo $getVariations ? $err : $msg;
+		if($bulk == 1) {
+			$status = $this->optimize($img, true, 'bulk');
+			header('Content-Type: application/json');
+			echo json_encode($status);
 			exit(0);
+		} else {
+			$status = $this->optimize($img, true, 'manual');
+			if(!is_null($status['error'])) {
+				$msg = $this->_('Not optimized, check log!');
+				// errors are already logged by optimize method
+				echo $getVariations ? $err : $msg;
+				exit(0);
+			}
 		}
 
 		@clearstatcache(true, $img->filename);
-		$dest_size = filesize($img->filename);
+		$dest_size = @filesize($img->filename);
 		$percentNew = 100 - (int) ($dest_size / $src_size * 100);
 
 		if($getVariations) {
 			echo wireBytesStr($dest_size);
 		} else {
-			//printf(__('Optimized, reduced by %1$d%%'), $percentNew);
-			echo __('Optimized, new size:') . ' ' . wireBytesStr($dest_size);
+			//printf($this->_('Optimized, reduced by %1$d%%'), $percentNew);
+			echo $this->_('Optimized, new size:') . ' ' . wireBytesStr($dest_size);
 		}
 
 		exit(0);
@@ -464,34 +529,31 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	}
 
 	/**
-	 * Process bulk optimize of all images, called from this module settings
-	 * in bulk mode, on button click
+	 * Create a list of images to be optimized and echo them in JSON format.
+	 * Called from this module settings in bulk mode, on button click
 	 *
 	 */
 	public function bulkOptimize() {
 
-		@unlink($this->getProgressFile());
-		@unlink($this->getCancelFile());
-
 		// check if engine is selected
 		if(!isset($this->configData['optBulkEngine'])) {
-			$this->writeProgressFile($this->getProgressFile(), array(
-				'percentComplete' => '',
-				'error'           => 'ERROR: No engine selected.', // message displayed in progressbar
-				'file'            => 'ERROR', // indicator that error occured
-				'basedir'         => '',
-				'url'             => ''
-			));
 			$this->log->save('No engine selected (bulk).');
+			$status = array(
+				'error' => 'No engine selected.',
+				'numImages' => 0
+			);
+			header('Content-Type: application/json');
+			echo json_encode($status);
 			exit(0);
 		}
 
-		$allImages = array();
 		$processOriginals  = (isset($this->configData['optBulkAction']) && in_array('optimize_originals', $this->configData['optBulkAction']));
 		$processVariations = (isset($this->configData['optBulkAction']) && in_array('optimize_variations', $this->configData['optBulkAction']));
 
+		// get all fields of type FieldtypeImage or FieldtypeCroppableImage3
 		$selector = 'type=FieldtypeImage';
-		if($this->wire('modules')->isInstalled('FieldtypeCroppableImage3')) $selector .= '|FieldtypeCroppableImage3';
+		if(wire('modules')->isInstalled('FieldtypeCroppableImage3')) $selector .= '|FieldtypeCroppableImage3';
+		$imageFields = wire('fields')->find($selector);
 		/*
 		// returns all Fields that extend FieldtypeImage, but without FieldtypeFile
 		$img = new Field();
@@ -500,44 +562,82 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		unset($fieldtypes['FieldtypeFile']);
 		$selector = 'type=' . implode('|',array_keys($fieldtypes));
 		*/
-		foreach ($this->wire('fields')->find($selector) as $f) {
-			foreach ($this->wire('pages')->find("$f>0, include=all") as $p) {
+
+		// get total number of pages with images
+		$numPagesWithImages = 0;
+		foreach ($imageFields as $f) $numPagesWithImages += wire('pages')->count("$f>0, include=all");
+
+		$allImages = array();
+		$limit = 1;
+		$start = abs((int) wire('input')->get('start'));
+		if($start >= $numPagesWithImages) $start = $numPagesWithImages;
+		$baseurl = 'edit?name=' . __CLASS__ . '&mode=optimize&bulk=1';
+
+		// get all images from pages that have image fields
+		// this is slow for large number of variations on the page, since getVariations() use filesystem and not DB
+		/*
+		foreach ($imageFields as $f) {
+			foreach (wire('pages')->find("$f>0, include=all, start=$start, limit=$limit") as $p) {
 				$images = $p->getUnformatted($f->name);
+				$id = $p->id;
 				foreach ($images as $i) {
-					if($processOriginals) $allImages[] = $i;
+					//if($processOriginals) $allImages[] = $baseurl . "&id=$id&file=$id,{$i->basename}";
+					//if($processVariations) foreach ($i->getVariations() as $v) $allImages[] = $baseurl . "&id=$id&file=$id,{$v->basename}";
+					if($processOriginals) $allImages[] = "$id,{$i->basename}";
+					if($processVariations) foreach ($i->getVariations() as $v) $allImages[] = "$id,{$v->basename}";
+				}
+			}
+		}
+		*/
+
+		foreach ($imageFields as $f) {
+			foreach (wire('pages')->find("$f>0, include=all, start=$start, limit=$limit") as $p) {
+				$images = $p->getUnformatted($f->name);
+				$id = $p->id;
+				$filesArray = false;
+
+				foreach ($images as $i) {
+					if($processOriginals) $allImages[] = "$id,{$i->basename}";
+
 					if($processVariations) {
-						foreach ($i->getVariations() as $variation) $allImages[] = $variation;
+
+						// create array of files in pagefiles folder eg. /site/assest/files/1234/
+						if($filesArray === false) {
+							$filesArray = array_diff(@scandir($i->pagefiles->path), array('.', '..', $i->basename)); // array_diff removes ., .. and self
+						}
+
+						// iterate over array of files and check if file is variation of current image
+						//$variations = array();
+						foreach($filesArray as $file) {
+							//if($this->isVariation($i->basename, $file)) $variations[] = "$id,$file";
+							if($this->isVariation($i->basename, $file)) $allImages[] = "$id,$file";
+						}
+						//$allImages = array_merge($allImages, $variations);
+
+						// remove files that are variations from array of files to reduce the size of array, for better performance
+						//$filesArray = array_diff($filesArray, $variations);
 					}
+
+					// remove original from array of files
+					//$filesArray = array_diff($filesArray, array($i->basename));
 				}
 			}
 		}
 
-		$totalItems = count($allImages);
-
-		// important!
-		@session_write_close();
-
-		set_time_limit(3600);
-
-		for ($i = 0; $i < $totalItems; $i ++) {
-
-			$img = $allImages[$i];
-			$error = null;
-
-			if(!file_exists($img->filename)) {
-				$error = $this->getMessage('error_read_file');
-				$this->log->save($error);
-			} else {
-			}
-			$this->optimize($img, true, 'bulk', $i+1, $totalItems, $error);
-
-			if(file_get_contents($this->getCancelFile()) === '1') {
-				// Cancel button pressed, bail out
-				break;
-			}
+		$totalImages = count($allImages);
+		$a = array();
+		if($start < $numPagesWithImages) {
+			$a["counter"] =	sprintf($this->_('Processing page %1$d out of %2$d - {%3$d}%% complete'), // {} is placeholder, must be present
+											($start+1), $numPagesWithImages, (int) (($start) / $numPagesWithImages * 100));
+		} else {
+			$a["counter"] =	sprintf($this->_('All done - {100}%% complete'));
 		}
-
-	exit(0);
+		$a["numBatches"] = $numPagesWithImages;
+		$a["numImages"] = $totalImages;
+		$a["images"] = $allImages;
+		header('Content-Type: application/json');
+		echo json_encode($a);
+		exit(0);
 
 	}
 
@@ -548,34 +648,32 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 * @param Pageimage $img Pageimage object
 	 * @param boolean $force true, when you want to force optimize the image
 	 * @param string $mode 'auto', 'manual' or 'bulk'
-	 * @param int|null $counter used when called from bulkOptimize(), current image number
-	 * @param int $total used when called from bulkOptimize(), total number of images
-	 * @param string|null $error error message
-	 * @return boolean false on error
+	 * @return array
 	 *
 	 */
-	public function optimize($img, $force = false, $mode = 'auto', $counter = null, $total = 1, $error = null) {
+	public function optimize($img, $force = false, $mode = 'auto') {
+		// todo: test with $config->pagefileExtendedPaths = true
 
-		//if(!$img instanceof Pageimage) throw new WireException('Not an image.');
+		//$demo = false;
+		$demo = $this->wire('config')->demo;
 
-		if(!is_null($error)) {
-			$this->writeProgressFile($this->getProgressFile(), array(
-				'percentComplete' => (int) ($counter / $total * 100) . "", //type casting
-				'error'           => $error,
-				'file'            => $img->basename,
-				'basedir'         => basename(dirname($img->filename)),
-				'url'             => $img->httpUrl
-			));
-			$this->log->save($error);
-			return false;
-		}
+		$status = array(
+			'error'           => null, // various errors
+			'error_api'       => null, // errors from reSmush.it
+			'percentNew'      => '0', // reduction percentage
+			'file'            => $img->basename, // image name
+			'basedir'         => basename(dirname($img->filename)), // page id where image is eg. 1234
+			'url'             => $img->httpUrl // full url to the image
+		);
 
-		if(!$force && !$this->isOptimizeNeeded) return false;
+		// force is only used in optimizeOnUpload
+		if(!$force && !$this->isOptimizeNeeded) return false; // todo: return array?
 
 		if(!in_array($img->ext, $this->allowedExtensions)) {
-			$error = 'Error optimizing ' . $img->filename . ': unsupported extension';
+			$error = '($mode): Error optimizing ' . $img->filename . ': unsupported extension';
 			$this->log->save($error);
-			return false;
+			$status['error'] = 'unsupported extension';
+			return $status;
 		}
 
 		$percentNew = 0;
@@ -593,10 +691,11 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			if($img->filesize >= self::API_SIZELIMIT) {
 				$error = 'Error optimizing ' . $img->filename . ', file larger then ' . self::API_SIZELIMIT . ' bytes';
 				$this->log->save($opt . $error);
-				return false;
+				$status['error'] = 'file to large';
+				return $status;
 			}
 
-			//alternative using curl instead od WireHttp class
+			// upload image using curl
 			/*
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, self::WEBSERVICE . '&qlty=' . $q);
@@ -611,17 +710,17 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 					$postfields = array ('files' => '@'.$img->filename);
 			}
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
-
 			$data = curl_exec($ch);
-
 			if($data === false || curl_errno($ch)) {
 				$error = 'Error optimizing ' . $img->filename . ': cURL error: ' . curl_error($ch);
 				$this->log->save($error);
-				return false;
+				$status['error'] = curl_error($ch);
+				return $status;
 			}
 			curl_close($ch);
 			*/
 
+			// upload image using WireHttp class
 			$http = new WireHttp();
 			$http->setTimeout(self::CONNECTION_TIMEOUT); // important!!! default is 4.5 sec and that is to low
 			$eol = "\r\n";
@@ -636,9 +735,10 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			$data = $http->post(self::WEBSERVICE . '&qlty=' . $q, $content);
 			if(is_bool($data)) {
 				$error = 'Error optimizing ' . $img->filename . ', ';
-				$error .= $data === true ? 'request timeout' : $http->getHttpCode(true);
-				$this->log->save($opt . $error . ' (possible request timeout)');
-				return false;
+				$error1 = $data === true ? 'request timeout' : $http->getHttpCode(true);
+				$this->log->save($opt . $error . $error1 . ' (possible request timeout)');
+				$status['error'] = $error1;
+				return $status;
 			}
 
 			$response = json_decode($data);
@@ -646,22 +746,16 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			if($response === null) {
 				$error = 'Error optimizing ' . $img->filename . ', returned data is empty';
 				$this->log->save($opt . $error);
-				return false;
+				$status['error'] = 'returned data is empty';
+				return $status;
 			}
 
-			// write api error from webservice to json and log file
 			if(isset($response->error)) {
 				$error = isset($this->apiErrorCodes[$response->error]) ? $this->apiErrorCodes[$response->error] : $response->error;
-				$this->writeProgressFile($this->getProgressFile(), array(
-					'error_api' => ucfirst($error),
-					'percentComplete' => (int) ($counter / $total * 100) . "", //type casting
-					'file' => $img->basename,
-					'basedir' => basename(dirname($img->filename)),
-					'url' => $img->httpUrl
-				));
-				$error = 'Error optimizing ' . $img->filename . ', ' . $error;
-				$this->log->save($opt . $error);
-				return false;
+				$this->log->save($opt . 'Error optimizing ' . $img->filename . ', ' . $error);
+				$status['error'] = $error;
+				$status['error_api'] = $error;
+				return $status;
 			}
 
 			$dest_size = $response->dest_size;
@@ -673,20 +767,21 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 				$http = new WireHttp();
 				$http->setTimeout(self::CONNECTION_TIMEOUT);
 				try {
-					$http->download($response->dest, $img->filename, array('useMethod' => 'fopen'));
+					if(!$demo) $http->download($response->dest, $img->filename);//, array('useMethod' => 'fopen'));
 					//$percentNew = 100 - (int) ($response->dest_size / $response->src_size * 100);
 					$percentNew = (int) $response->percent;
 				} catch(Exception $e) {
 					$error = 'Error retreiving ' . $response->dest . ', ' . $e->getMessage();
 					$this->log->save($opt . $error);
-					return false;
+					$status['error'] = $e->getMessage();
+					return $status;
 				}
 			}
 		}
 
 		else if(isset($this->configData["opt{$mode1}Engine"]) && $this->configData["opt{$mode1}Engine"] == 'localtools') {
-			// use local tools
-			$opt = "LocalTools ($mode): ";
+			// use local (server) tools
+			$opt = "ServerTools ($mode): ";
 
 			$src_size = filesize($img->filename);
 			$factory = new \ImageOptimizer\OptimizerFactory($this->optimizeSettings);
@@ -695,18 +790,12 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 			try {
 				// optimizer will throw exceptions if none of the optimizers in chain is not found
-				$optimizer->optimize($img->filename);  // optimized file overwrites original!
+				if(!$demo) $optimizer->optimize($img->filename);  // optimized file overwrites original!
 			} catch (Exception $e) {
 				$error = $e->getMessage();
-				$this->writeProgressFile($this->getProgressFile(), array(
-					'percentComplete' => (int) ($counter / $total * 100) . "", //type casting
-					'error'           => $error,
-					'file'            => $img->basename,
-					'basedir'         => basename(dirname($img->filename)),
-					'url'             => $img->httpUrl
-				));
 				$this->log->save($opt . 'Error optimizing ' . $img->filename . ', ' . $error);
-				return false;
+				$status['error'] = $error;
+				return $status;
 			}
 
 			clearstatcache(true, $img->filename);
@@ -718,23 +807,13 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			$opt = "No engine selected ($mode). ";
 			$src_size = filesize($img->filename);
 			$this->log->save($opt . $img->filename . ', source ' . $src_size . ' bytes');
-			return $opt; //return false??
+			return $opt; // todo: return false, array, json?
 		}
 
+		// image is optimized
 		$this->log->save($opt . $img->filename . ', source ' . $src_size . ' bytes, destination ' . $dest_size . ' bytes, reduction ' . $percentNew . '%');
-
-		if(!is_null($counter) && !is_null($total)) {
-			$this->writeProgressFile($this->getProgressFile(), array(
-				'percentComplete' => (int) ($counter / $total * 100) . "",
-				'counter'         => sprintf(__('Optimizing image %1$d out of %2$d - %3$d%% complete'),
-														 $counter, $total, (int) ($counter / $total * 100)),
-				'percentNew'      => $percentNew . "",
-				'error'           => $error,
-				'file'            => $img->basename,
-				'basedir'         => basename(dirname($img->filename)),
-				'url'             => $img->httpUrl
-			));
-		}
+		$status['percentNew'] = $percentNew . "";
+		return $status;
 
 	}
 
@@ -747,41 +826,41 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	public function getModuleConfigInputfields(array $data) {
 
-		//$fields = $this->wire(new InputfieldWrapper());
 		$fields = new InputfieldWrapper();
 		$modules = $this->wire('modules');
 		//$data = array_merge(self::$defaultConfig, $data);
+		if($this->wire('config')->demo) $this->error($this->_('Optimization disabled in demo mode!'));
 
 		// automatic mode
 		$fieldset              = $modules->get('InputfieldFieldset');
-		$fieldset->label       = __('Automatic Mode');
-		$fieldset->description = __('Automatically optimize images on upload (originals) or on resize/crop (variations).');
+		$fieldset->label       = $this->_('Automatic Mode');
+		$fieldset->description = $this->_('Automatically optimize images on upload (originals) or on resize/crop (variations).');
 		$fields->add($fieldset);
 
 		$field                = $modules->get('InputfieldRadios');
 		$field->name          = 'optAutoEngine';
-		$field->label         = __('Engine');
-		$field->columnWidth   = 38;
-		$field->addOption('resmushit',  __('Use reShmush.it online service'));
-		$field->addOption('localtools', __('Use local optimization tools'));
+		$field->label         = $this->_('Engine');
+		$field->columnWidth   = 40;
+		$field->addOption('resmushit',  $this->_('Use reShmush.it online service'));
+		$field->addOption('localtools', $this->_('Use optimization tools available on web server'));
 		$field->value         = isset($data['optAutoEngine']) ? $data['optAutoEngine'] : 'resmushit';
 		$fieldset->add($field);
 
 		$field                = $modules->get('InputfieldCheckboxes');
 		$field->name          = 'optAutoAction';
-		$field->label         = __('Action');
-		$field->columnWidth   = 38;
-		$field->addOption('optimize_originals', __('Optimize on upload'));
-		$field->addOption('backup', __('Backup original'));
-		$field->addOption('optimize_variations', __('Optimize on resize/crop'));
-		if($modules->isInstalled('FieldtypeCroppableImage3')) $field->addOption('optimize_variationsCI3', __('Optimize on resize/crop for CI3'));
+		$field->label         = $this->_('Action');
+		$field->columnWidth   = 40;
+		$field->addOption('optimize_originals', $this->_('Optimize on upload'));
+		$field->addOption('backup', $this->_('Backup original'));
+		$field->addOption('optimize_variations', $this->_('Optimize on resize/crop'));
+		if($modules->isInstalled('FieldtypeCroppableImage3')) $field->addOption('optimize_variationsCI3', $this->_('Optimize on resize/crop for CI3'));
 		$field->value         = isset($data['optAutoAction']) ? $data['optAutoAction'] : array();
 		$fieldset->add($field);
 
 		$field                = $modules->get('InputfieldInteger');
 		$field->name          = 'optAutoQuality';
-		$field->label         = __('JPG quality');
-		$field->columnWidth   = 24;
+		$field->label         = $this->_('JPG quality');
+		$field->columnWidth   = 20;
 		$field->attr('min', '1');
 		$field->attr('max', '100');
 		$field->value         = isset($data['optAutoQuality']) ? $data['optAutoQuality'] : self::JPG_QUALITY_DEFAULT;
@@ -790,32 +869,32 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 		// manual mode
 		$fieldset = $modules->get('InputfieldFieldset');
-		$fieldset->label = __('Manual Mode');
-		$fieldset->description = __('Add Optimize button/link to page and/or variations modal.');
+		$fieldset->label = $this->_('Manual Mode');
+		$fieldset->description = $this->_('Add Optimize button/link to page and/or variations modal.');
 		$fields->add($fieldset);
 
 		$field                = $modules->get('InputfieldRadios');
 		$field->name          = 'optManualEngine';
-		$field->label         = __('Engine');
-		$field->columnWidth   = 38;
-		$field->addOption('resmushit',  __('Use reShmush.it online service'));
-		$field->addOption('localtools', __('Use local optimization tools'));
+		$field->label         = $this->_('Engine');
+		$field->columnWidth   = 40;
+		$field->addOption('resmushit',  $this->_('Use reShmush.it online service'));
+		$field->addOption('localtools', $this->_('Use optimization tools available on web server'));
 		$field->value         = isset($data['optManualEngine']) ? $data['optManualEngine'] : 'resmushit';
 		$fieldset->add($field);
 
 		$field                = $modules->get('InputfieldCheckboxes');
 		$field->name          = 'optManualAction';
-		$field->label         = __('Action');
-		$field->columnWidth   = 38;
-		$field->addOption('optimize_originals',  __('Add optimize button/link to page edit'));
-		$field->addOption('optimize_variations', __('Add optimize button to variations modal'));
+		$field->label         = $this->_('Action');
+		$field->columnWidth   = 40;
+		$field->addOption('optimize_originals',  $this->_('Add optimize button/link to page edit'));
+		$field->addOption('optimize_variations', $this->_('Add optimize button to variations modal'));
 		$field->value         = isset($data['optManualAction']) ? $data['optManualAction'] : array('optimize_originals', 'optimize_variations');
 		$fieldset->add($field);
 
 		$field                = $modules->get('InputfieldInteger');
 		$field->name          = 'optManualQuality';
-		$field->label         = __('JPG quality');
-		$field->columnWidth   = 24;
+		$field->label         = $this->_('JPG quality');
+		$field->columnWidth   = 20;
 		$field->attr('min', '1');
 		$field->attr('max', '100');
 		$field->value         = isset($data['optManualQuality']) ? $data['optManualQuality'] : self::JPG_QUALITY_DEFAULT;
@@ -825,34 +904,34 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		// bulk mode
 		$fieldset              = $modules->get('InputfieldFieldset');
 		$fieldset->name        = 'bulkoptimize_fieldset';
-		$fieldset->label       = __('Bulk Mode');
-		$fieldset->description = __('Optimize ALL images on button click');
+		$fieldset->label       = $this->_('Bulk Mode');
+		$fieldset->description = $this->_('Optimize ALL images on button click.');
 		$fields->add($fieldset);
 
 		$field                = $modules->get('InputfieldRadios');
 		$field->attr('id+name', 'optBulkEngine');
-		$field->label         = __('Engine');
-		$field->columnWidth   = 38;
-		$field->addOption('resmushit',  __('Use reShmush.it online service'));
-		$field->addOption('localtools', __('Use local optimization tools'));
+		$field->label         = $this->_('Engine');
+		$field->columnWidth   = 40;
+		$field->addOption('resmushit',  $this->_('Use reShmush.it online service'));
+		$field->addOption('localtools', $this->_('Use optimization tools available on web server'));
 		$field->value         = isset($data['optBulkEngine']) ? $data['optBulkEngine'] : 'resmushit';
 		$fieldset->add($field);
 
 		$field                = $modules->get('InputfieldCheckboxes');
 		$field->name          = 'optBulkAction';
 		$field->id            = 'optBulkAction';
-		$field->label         = __('Action');
-		$field->columnWidth   = 38;
-		$field->addOption('optimize_originals',  __('Optimize originals'));
-		$field->addOption('optimize_variations', __('Optimize variations'));
+		$field->label         = $this->_('Action');
+		$field->columnWidth   = 40;
+		$field->addOption('optimize_originals',  $this->_('Optimize originals'));
+		$field->addOption('optimize_variations', $this->_('Optimize variations'));
 		$field->value         = isset($data['optBulkAction']) ? $data['optBulkAction'] : '';
 		$fieldset->add($field);
 
 		$field                = $modules->get('InputfieldInteger');
 		$field->name          = 'optBulkQuality';
 		$field->id            = 'optBulkQuality';
-		$field->label         = __('JPG quality');
-		$field->columnWidth   = 24;
+		$field->label         = $this->_('JPG quality');
+		$field->columnWidth   = 20;
 		$field->attr('min', '1');
 		$field->attr('max', '100');
 		$field->value         = isset($data['optBulkQuality']) ? $data['optBulkQuality'] : self::JPG_QUALITY_DEFAULT;
@@ -860,39 +939,44 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 		$field                = $modules->get('InputfieldMarkup');
 		$field->id            = 'bulkoptimize';
-		$field->label         = __('Bulk optimize');
+		$field->label         = $this->_('Bulk optimize');
 		$field->icon          = 'coffee';
-		$field->description   = __('Click the button below to process all images sitewide.');
+		$field->description   = $this->_('Click the button below to optimize all images sitewide.');
 		//$field->value         = '<p class="description" style="margin-bottom:0;margin-top:-1em"><strong>' .
 		$field->value         = '<p class="description"><strong>' .
-														__('WARNING: Using local optimization tools is CPU intensive process. ') .
-														__('Running bulk optimize on large amount of images may take a while to finish and script may timeout!') .
+														$this->_('WARNING: Using web server optimization tools is CPU intensive process. ') .
+														$this->_('Running bulk optimize on large amount of images may take a while to finish.') .
 														'</strong></p>';
-
+		if($this->wire('config')->demo) {
+			$field->value       .= '<span class="NoticeError">&nbsp;' . $this->_('Optimization disabled in demo mode!') . '&nbsp;</span>';
+		}
+		//} else {
 			$field_button         = $modules->get('InputfieldButton');
 			$field_button->attr('id+name', 'optimize_all');
-			$field_button->attr('data-url', 'edit?name=' . wire('input')->get('name') . '&mode=bulk');
-			$field_button->attr('data-progress-url', $this->getProgressFile(true));
+			$field_button->attr('data-url', 'edit?name=' . __CLASS__ . '&mode=bulk');
+			$field_button->attr('data-optimizeurl', 'edit?name=' . wire('input')->get('name') . '&mode=optimize&bulk=1');
 			$field_button->attr('data-start-msg', $this->getMessage('start'));
 			$field_button->attr('data-complete-msg', $this->getMessage('complete'));
 			$field_button->attr('data-error-msg', $this->getMessage('error'));
 			$field_button->attr('data-confirm-msg', $this->getMessage('confirm'));
 			$field_button->attr('data-save-first-msg', $this->getMessage('save_first'));
-			$field_button->attr('data-poll', ($data['optBulkEngine'] == 'resmushit') ? '500' : '100');
-			$field_button->value  = __('Start bulk image optimize');
+			$field_button->attr('data-filelist-msg', $this->getMessage('filelist'));
+			$field_button->attr('data-filelistnum-msg', $this->getMessage('filelistnum'));
+			$field_button->value  = $this->_('Start bulk image optimize');
 			$field->add($field_button);
 
 			$field_button         = $modules->get('InputfieldButton');
 			$field_button->attr('id+name', 'cancel_all');
-			$field_button->attr('data-url', 'edit?name=' . wire('input')->get('name') . '&mode=cancel');
-			$field_button->attr('data-cancel-url', $this->getCancelFile(true));
 			$field_button->attr('data-canceled-msg', $this->getMessage('canceled'));
-			$field_button->value  = __('Cancel');
+			$field_button->attr('data-canceling-msg', $this->getMessage('canceling'));
+			$field_button->value  = $this->_('Cancel');
 			$field->add($field_button);
+		//}
 
 			$fieldm               = $modules->get('InputfieldMarkup');
 			$fieldm->attr('id', 'progbarwrapper');
-			$fieldm->value        = '<progress max="100" value="0" id="progressbar"></progress><span id="percent"></span><p id="result"></p>';
+			$fieldm->value        = '<progress max="100" value="0" id="progressbar"></progress><span id="percent"></span><p id="result"></p>' .
+															'<progress max="100" value="0" id="progressbar1"></progress><span id="percent1"></span>';
 			$field->add($fieldm);
 
 		$fieldset->add($field);
@@ -900,31 +984,31 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		// local tools info
 		$fieldset = $modules->get('InputfieldFieldset');
 		$fieldset->name = 'localoptimizers_fieldset';
-		$fieldset->label = __('Advanced options for local optimization tools');
+		$fieldset->label = $this->_('Advanced options for web server optimization tools');
 		$fieldset->collapsed = Inputfield::collapsedYes;
 		$fields->add($fieldset);
 
 		$table = $modules->get('MarkupAdminDataTable');
 		$table->setEncodeEntities(false);
 		$table->headerRow(array(
-			__('Optimizer', 'th'),
-			__('Path', 'th'),
+			$this->_('Optimizer'),
+			$this->_('Path')
 		));
 		foreach($this->optimizers as $optimizer => $path) {
-			if($path === '') $path = __('Not found');
+			if($path === '') $path = $this->_('Not found');
 			$table->row(array($optimizer, $path));
 		}
 
 		$field = $modules->get('InputfieldMarkup');
 		//$field->skipLabel = true;
-		$field->label = __('Search path');
+		$field->label = $this->_('Search path');
 		$field->value = '<p>' . $this->findPaths() . '</p>' . $table->render();
 		$fieldset->add($field);
 
 		$field = $modules->get('InputfieldCheckbox');
 		$field->name = 'optChain';
-		$field->label = __('Enable optimizers chaining');
-		$field->description = __('If unchecked, only the first available optimizer for specific image type will run (default). If checked, all available optimizers will run one after another.');
+		$field->label = $this->_('Enable optimizers chaining');
+		$field->description = $this->_('If unchecked, only the first available optimizer for specific image type will run (default). If checked, all available optimizers will run one after another.');
 		$field->value = isset($data['optChain']) ? $data['optChain'] : '';
 		$field->checked = ($field->value == 1) ? 'checked' : '';
 		$fieldset->add($field);
@@ -943,42 +1027,6 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		return isset(self::$messages[$key]) ? self::$messages[$key] : '';
 	}
 
-	/**
-	 * Return path or url of the progress file
-	 *
-	 * @param bool $url if true return url, if false return path
-	 * @return string
-	 *
-	 */
-	private function getProgressFile($url = false) {
-		$mode = ($url === true) ? 'urls' : 'paths';
-		return $this->wire('config')->$mode->assets . strtolower(__CLASS__) . '/progress.json';
-	}
-
-	/**
-	 * Return path or url of the cancel file
-	 *
-	 * @param bool $url if true return url, if false return path
-	 * @return string
-	 *
-	 */
-	private function getCancelFile($url = false) {
-		$mode = ($url === true) ? 'urls' : 'paths';
-		return $this->wire('config')->$mode->assets . strtolower(__CLASS__) . '/cancel.json';
-	}
-
-	/**
-	 * Write json encoded array to the file
-	 *
-	 * @param string $file
-	 * @param array|mixed $content
-	 *
-	 */
-	private function writeProgressFile($file, $content = null) {
-		if(!is_null($content)) {
-			file_put_contents($file, json_encode($content));
-		}
-	}
 
 	/**
 	 * Checks for existance of optimizer executables
@@ -1020,6 +1068,157 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 
 	/**
+	 * Given two filenames, check if $variationName is variation of $originalName
+	 * This is very simplified version.
+	 * isVariation('123.jpg', '123.0x260.jpg'); //true
+	 * isVariation('123.jpg', '123.-portrait.jpg'); //true
+	 * isVariation('123.jpg', '123.jpg'); //false
+	 * isVariation('123.jpg', '456.jpg'); //false
+	 *
+	 * @param string $originalName
+	 * @param string $variationName
+	 * @return bool
+	 *
+	 */
+	public function isVariation($originalName, $variationName) {
+
+		// if file is the same as the original, then it's not a variation
+		if($originalName === $variationName) return false;
+
+		// if file doesn't start with the original name then it's not a variation
+		$test1 = substr($variationName, 0, strpos($variationName, '.'));
+		$test2 = substr($originalName, 0, strpos($originalName, '.'));
+		if($test1 !== $test2) return false;
+
+		return true;
+	}
+
+	/**
+	 * Return the Pageimage object from page
+	 * This is modified version of the method in ProcessPageEditImageSelect.module to account for
+	 * variations made by CroppableImage3
+	 *
+	 * @param Page $page page that contains images
+	 * @param bool $getVariation Returns the variation specified in the URL. Otherwise returns original (default).
+	 * @return Pageimage|null
+	 *
+	 */
+	public function getPageimage(Page $page, $getVariation = false) {
+
+		//$images = $this->getImages($this->page);
+		$images = $this->getImages($page); //MP
+		$file = basename($this->input->get->file);
+		$variationFilename = '';
+
+		if(strpos($file, ',') === false) {
+			// prepend ID if it's not there, needed for ajax in-editor resize
+			$originalFilename = $file;
+			$file = $page->id . ',' . $file;
+		} else {
+			// already has a "123," at beginning
+			list($unused, $originalFilename) = explode(',', $file);
+		}
+
+		$originalFilename = $this->wire('sanitizer')->filename($originalFilename, false, 1024);
+
+		// if requested file does not match one of our allowed extensions, abort
+		//if(!preg_match('/\.(' . $this->extensions . ')$/iD', $file, $matches)) throw new WireException("Unknown image file");
+		$extensions = 'jpg|jpeg|gif|png|svg'; //MP
+		//$extensions = self::API_ALLOWED_EXTENSIONS; //MP
+		//if(!preg_match('/\.(' . $extensions . ')$/iD', $file, $matches)) return null;
+		if(!preg_match('/\.(' . $extensions . ')$/iD', $file, $matches)) return null; //MP
+
+		// get the original, non resized version, if present
+		// format:            w x h    crop       -suffix
+		//if(preg_match('/(\.(\d+)x(\d+)([a-z0-9]*)(-[-_.a-z0-9]+)?)\.' . $matches[1] . '$/', $file, $matches)) {
+		if(preg_match('/(\.(\d?)x?(\d?)([a-z0-9]*)(-[-_.a-z0-9]+)?)\.' . $matches[1] . '$/', $file, $matches)) { //MP
+			// filename referenced in $_GET['file'] IS a variation
+			// Follows format: original.600x400-suffix1-suffix2.ext
+			// Follows format: original.-suffix1-suffix2.ext for CroppableImage3 //MP
+			$this->editWidth = (int) $matches[2];
+			$this->editHeight = (int) $matches[3];
+			$variationFilename = $originalFilename;
+			$originalFilename = str_replace($matches[1], '', $originalFilename); // remove dimensions and optional suffix
+		} else {
+			// filename referenced in $_GET['file'] is NOT a variation
+			$getVariation = false;
+		}
+
+		// update $file as sanitized version and with original filename only
+		$file = "{$page->id},$originalFilename";
+
+		// if requested file is not one that we have, abort
+		//if(!array_key_exists($file, $images)) throw new WireException("Invalid image file: $file");
+		if(!array_key_exists($file, $images)) return null; //MP
+
+		// return original
+		if(!$getVariation) return $images[$file];
+
+		// get variation
+		$original = $images[$file];
+		$variationPathname = $original->pagefiles->path() . $variationFilename;
+		$pageimage = null;
+		if(is_file($variationPathname)) $pageimage = $this->wire(new Pageimage($original->pagefiles, $variationPathname));
+		//if(!$pageimage) throw new WireException("Unrecognized variation file: $file");
+		if(!$pageimage) return null; //MP
+
+		return $pageimage;
+	}
+
+	/**
+	 * Get all Pageimage objects on page
+	 * This is modified version of the method in ProcessPageEditImageSelect.module
+	 *
+	 * @param Page $page
+	 * @param array|WireArray $fields
+	 * @param int $level Recursion level (internal use)
+	 * @return Pageimage array
+	 *
+	 */
+	public function getImages(Page $page, $fields = array(), $level = 0) {
+
+		$allImages = array();
+		if(!$page->id) return $allImages;
+
+		$numImages = 0;
+		$numImageFields = 0;
+		
+		if(empty($fields)) $fields = $page->fields;
+
+		foreach($fields as $field) {
+
+			if($field->type instanceof FieldtypeRepeater) {
+			//if(wireInstanceOf($field->type, 'FieldtypeRepeater')) { //MP only available in PW 3.0.73
+				// get images that are possibly in a repeater
+				$repeaterValue = $page->get($field->name);
+				if($repeaterValue instanceof Page) $repeaterValue = array($repeaterValue); //MP support for FieldtypeFieldsetPage
+				if($repeaterValue) foreach($repeaterValue as $p) {
+					$images = $this->getImages($p, $p->fields, $level+1);
+					if(!count($images)) continue;
+					$allImages = array_merge($allImages, $images);
+					$numImages += count($images);
+					$numImageFields++;
+				}
+				continue;
+			}
+
+			if(!$field->type instanceof FieldtypeImage) continue;
+			$numImageFields++;
+			$images = $page->getUnformatted($field->name);
+			if(!count($images)) continue;
+
+			foreach($images as $image) {
+				$numImages++;
+				$key = $page->id . ',' . $image->basename;  // page_id,basename for repeater support
+				$allImages[$key] = $image;
+			}
+		}
+
+		return $allImages;
+	}
+
+
+	/**
 	 * Main entry point
 	 * Set hooks and handle ajax requests
 	 *
@@ -1040,23 +1239,17 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		if(isset($this->configData['optChain']) && $this->configData['optChain'] == 1) $this->optimizeSettings['execute_first'] = false;
 
 		if($input->get('name') === __CLASS__) {
-			$this->wire('modules')->get('JqueryMagnific');
-			$config->scripts->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.js');//?v=' . time());
-			$config->styles->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.css');//?v=' . time());
 
 			// optimize images in bulk mode on button click
 			if($mode === 'bulk') $this->bulkOptimize();
 
 			// optimize images in manual mode on clicking optimize button/link or on image variations modal
 			if($mode === 'optimize') $this->onclickOptimize(($input->get('var') == 1)); // &var=1 => process variation
-
-			// process cancel request in bulk mode
-			if($mode === 'cancel') {
-				$this->writeProgressFile($this->getCancelFile(), 1);
-				echo '1'; //success
-				exit (0);
-			}
 		}
+
+		$this->wire('modules')->get('JqueryMagnific');
+		$config->scripts->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.js');//?v=' . time());
+		$config->styles->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.css');//?v=' . time());
 
 		// add optimize button/link in manual mode on page/image edit
 		if(($page->process == 'ProcessPageEdit' || $page->process == 'ProcessPageEditImageSelect') && isset($this->configData['optManualEngine'])) {
@@ -1073,9 +1266,9 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		}
 
 		// optimize images in auto mode on upload
-		if(isset($this->configData['optAutoAction']) && in_array('optimize_originals', $this->configData['optAutoAction'])) {
+		if(isset($this->configData['optAutoAction']) && in_array('optimize_originals', $this->configData['optAutoAction']) && !$config->demo) {
 			$this->addHookBefore('InputfieldFile::fileAdded', $this, 'optimizeOnUpload');
-			$config->js('AutoSmush', __('Optimizing'));
+			$config->js('AutoSmush', $this->_('Optimizing'));
 			// delete backup copy - maybe this should run in all cases?
 			if(isset($this->configData['optAutoAction']) && in_array('backup', $this->configData['optAutoAction'])) {
 				$this->addHookAfter('InputfieldFile::processInputDeleteFile', $this, 'deleteBackup');
@@ -1083,7 +1276,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		}
 
 		// optimize images in auto mode on resize
-		if(isset($this->configData['optAutoAction']) &&
+		if(isset($this->configData['optAutoAction']) && !$config->demo &&
 			(in_array('optimize_variations', $this->configData['optAutoAction']) || in_array('optimize_variationsCI3', $this->configData['optAutoAction']))) {
 			$this->addHookAfter('ImageSizer::resize', $this, 'checkOptimizeNeeded');
 			$this->addHookAfter('Pageimage::size', $this, 'optimizeOnResize');
@@ -1095,24 +1288,16 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	}
 
 	/**
-	 * Creates directory /site/assets/autosmush on module install
+	 * Check for disabled exec functions
 	 *
 	 */
 	public function ___install() {
-		$logFolder = $this->wire('config')->paths->assets . strtolower(__CLASS__);
-		if(!is_dir($logFolder)) {
-			if(wireMkdir($logFolder) === false) throw new WireException("{$logFolder} could not be created, check permissions");
-		}
-		$this->writeProgressFile($this->getCancelFile(), 1);
-		if(!is_file($this->getCancelFile())) throw new WireException("{$logFolder} is not writable, check permissions");
-		@unlink($this->getCancelFile());
-
 		$disabled = explode(', ', ini_get('disable_functions'));
-		if(in_array('exec', $disabled)) $this->error('exec functions disabled, local optimization tools will not work.');
+		if(in_array('exec', $disabled)) $this->error('exec functions disabled, web server optimization tools will not work.');
 	}
 
 	/**
-	 * Removes directory /site/assets/autosmush on module uninstall
+	 * Removes directory /site/assets/autosmush on module uninstall, from previosu versions
 	 *
 	 */
 	public function ___uninstall() {

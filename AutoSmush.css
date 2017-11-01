@@ -6,8 +6,13 @@
 }
 */
 
-#progressbar {
+#progressbar,
+#progressbar1 {
     display: none;
+}
+
+#progressbar1 {
+    height: 4px;
 }
 
 progress,
@@ -22,22 +27,20 @@ progress,
     background: #f1f2f3;
     border-radius: 2px;
     border: 1px solid #ddd;
+    margin-bottom: -16px;
 }
 
 #percent:empty,
+#percent1:empty,
 #result:empty {
     display: none;
 }
 
-#result b {
-    display: inline-block;
-    width: 60px;
-}
-
-#result a {
+#result a,
+#result div {
     display: block;
     line-height: 16px;
-    font-size: 14px;
+    font-size: 13px;
     padding: 2px 8px 2px 24px;
     border-radius: 2px;
     position: relative;
@@ -45,10 +48,11 @@ progress,
 #result a:hover {
     background: rgba(0, 0, 0, 0.05);
 }
-#result a:before {
-    content: "\f00c";
+#result a:before,
+#result div:before {
+    content: "\f00c"; /* fa-check */
     position: absolute;
-    top: 5px;
+    top: 2px;
     left: 4px;
     display: inline-block;
     font: normal normal normal 14px/1 FontAwesome;
@@ -58,7 +62,36 @@ progress,
     margin-right: 6px;
 }
 
-#result a .status {
+#result div:before {
+    content: "\f110"; /* spinner */
+    top: 3px;
+    left: 4px;
+    -webkit-animation: fa-spin 2s infinite linear;
+    animation: fa-spin 2s infinite linear;
+    color: #5295D2;
+}
+#result div.pwas-error:before,
+#result a.pwas-error:before {
+    content: "\f057"; /* fa-times-circle */
+    top: 3px;
+    -webkit-animation: none;
+    animation: none;
+    color: #B94C51;
+    background-color: inherit;
+}
+#result div.info:before {
+    content: "\f129"; /* fa-info, when results are shown */
+    left: 8px;
+    -webkit-animation: none;
+    animation: none;
+}
+
+#result hr {
+    margin: 14px 0;
+}
+
+#result a .status,
+#result div .status {
     display: inline-block;
     margin-left: 8px;
     background-color: #5295D2;
@@ -71,7 +104,8 @@ progress,
 #result a .status.percent:after {
     content: "%";
 }
-#result a .status.error {
+#result a .status.error,
+#result div .status.error {
     background-color: #B94C51;
 }
 
@@ -81,6 +115,7 @@ progress,
     margin-bottom: -34px;
     margin-left: 16px;
     display: block;
+    color: #333;
 }
 
 .start {
@@ -88,10 +123,18 @@ progress,
 }
 
 .faded {
-    font-size: 12px;
-    color: #777;
-    margin-right: 4px;
+    /*font-size: 12px;*/
+    color: #666;
+    margin-right: 6px;
     display: inline-block;
+}
+
+.done {
+    /* what? */
+}
+
+progress.canceled {
+    /* what? */
 }
 
 progress {
@@ -157,17 +200,45 @@ progress.error::-moz-progress-bar {
     margin-left: 0;
 }
 
-.AdminThemeUikit progress, .AdminThemeUikit #result {
-    border-radius: 0;
-}
-
 .AdminThemeUikit #progbarwrapper .InputfieldContent {
     margin-top: 10px;
     overflow: hidden;
 }
 
 .AdminThemeUikit #percent {
-    top: -36px;
+    top: -37px;
+}
+
+.AdminThemeUikit #result {
+    margin-bottom: -14px;
+}
+
+.AdminThemeUikit #result,
+.AdminThemeUikit #result a,
+.AdminThemeUikit #result div,
+.AdminThemeUikit #result a .status,
+.AdminThemeUikit #result div .status,
+.AdminThemeUikit progress {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.AdminThemeUikit #result a:before {
+    top: 4px;
+}
+
+progress::-webkit-progress-bar {
+    background: #EEE;
+    box-shadow: none;
+    border-radius: 0;
+}
+progress::-webkit-progress-value {
+    background: #3EB998;
+    border-radius: 0;
+}
+progress::-moz-progress-bar {
+    background: #3EB998;
+    border-radius: 0;
 }
 
 img.mfp-img {
@@ -179,9 +250,16 @@ img.mfp-img {
     color: #d94C51;
     background-color: #d94C51;
 }
+
+/*
 .InputfieldForm label.InputfieldHeader {
     padding-top: .4em;
 }
+
+.AdminThemeUikit .InputfieldForm label.InputfieldHeader {
+    padding-top: 20px;
+}
+*/
 
 #Inputfield_optAutoAction_backup {
     margin-left: 1.5em;
@@ -192,5 +270,5 @@ img.mfp-img {
 }
 
 #ModuleEditForm .AdminDataTable tr td:first-child {
-  color: inherit;
+    color: inherit;
 }

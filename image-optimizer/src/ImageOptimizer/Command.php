@@ -32,11 +32,14 @@ final class Command
             $suppressOutput = '';
             $escapeShellCmd = 'escapeshellarg';
         } else {
-            $suppressOutput = ' 1> /dev/null 2> /dev/null';
+            //$suppressOutput = ' 1> /dev/null 2> /dev/null';
+            $suppressOutput = ' 2>&1';
             $escapeShellCmd = 'escapeshellcmd';
         }
 
-        $command = $escapeShellCmd($this->cmd).' '.implode(' ', array_map($escapeShellCmd, $args)).$suppressOutput;
+        //$command = $escapeShellCmd($this->cmd).' '.implode(' ', array_map($escapeShellCmd, $args)).$suppressOutput;
+				$commandArgs = 0 === count($args) ? '' : ' '.implode(' ', array_map($escapeShellCmd, $args));
+        $command = $escapeShellCmd($this->cmd).$commandArgs.$suppressOutput;        
 
         exec($command, $output, $result);
 
