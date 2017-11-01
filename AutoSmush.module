@@ -371,7 +371,6 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		if(stripos($event->return, $needle)) {
 			$event->return = str_replace($needle, $needle . $b->render(), $event->return);
 		}
-		//var_dump($event->return);
 	}
 
 	/**
@@ -509,7 +508,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		if($getVariations) {
 			echo wireBytesStr($dest_size);
 		} else {
-			//printf($this->_('Optimized, reduced by %1$d%%'), $percentNew);
+			//printf($this->x_x('Optimized, reduced by %1$d%%'), $percentNew);
 			echo $this->_('Optimized, new size:') . ' ' . wireBytesStr($dest_size);
 		}
 
