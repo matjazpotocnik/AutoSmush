@@ -1244,11 +1244,12 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 			// optimize images in manual mode on clicking optimize button/link or on image variations modal
 			if($mode === 'optimize') $this->onclickOptimize(($input->get('var') == 1)); // &var=1 => process variation
+			
+			// add assets
+			$this->wire('modules')->get('JqueryMagnific');
+			$config->scripts->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.js');//?v=' . time());
+			$config->styles->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.css');//?v=' . time());
 		}
-
-		$this->wire('modules')->get('JqueryMagnific');
-		$config->scripts->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.js');//?v=' . time());
-		$config->styles->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.css');//?v=' . time());
 
 		// add optimize button/link in manual mode on page/image edit
 		if(($page->process == 'ProcessPageEdit' || $page->process == 'ProcessPageEditImageSelect') && isset($this->configData['optManualEngine'])) {
