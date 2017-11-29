@@ -1,3 +1,5 @@
+windows_binaries/svgo/
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -13,6 +15,7 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
+*.prj
 
 # Windows shortcuts
 *.lnk

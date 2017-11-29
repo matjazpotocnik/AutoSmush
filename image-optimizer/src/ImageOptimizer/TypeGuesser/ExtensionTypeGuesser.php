@@ -18,6 +18,8 @@ class ExtensionTypeGuesser implements TypeGuesser
         switch($ext) {
             case 'png':
                 return self::TYPE_PNG;
+            case 'svg':
+                return self::TYPE_SVG;
             case 'gif':
                 return self::TYPE_GIF;
             case 'jpg':

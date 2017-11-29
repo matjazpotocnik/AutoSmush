@@ -22,6 +22,11 @@ class SmartTypeGuesser implements TypeGuesser
 
     public function guess($filepath)
     {
-        return $this->typeGuesser->guess($filepath);
+    		$type = $this->typeGuesser->guess($filepath);
+    		if ($type == self::TYPE_UNKNOWN) {
+    			$this->typeGuesser = new ExtensionTypeGuesser();
+    			$type = $this->typeGuesser->guess($filepath);
+    		}
+        return $type;
     }
 }

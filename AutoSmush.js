@@ -89,8 +89,10 @@ $(document).ready(function () {
 
     function finished() {
         percentElement.html(pwasMsg.complete);
-        progressBar.attr("value", 100);
-        progressBar1.attr("value", 100);
+        //progressBar.attr("value", 100);
+        progressBar.val(100);
+        //progressBar1.attr("value", 100);
+        progressBar1.val(100);
         progressBar.addClass("done");
         if (!canceled) {
             $(pwcancelBtn).remove();
@@ -144,17 +146,20 @@ $(document).ready(function () {
 
                 index += 1; // next item in images
                 var p1 = index / images.length * 100;
-                progressBar1.attr("value", Math.round(p1));
+                //progressBar1.attr("value", Math.round(p1));
+                progressBar1.val(Math.round(p1));
                 //var p = (batch / numBatches * 100) + (index * 100 / numBatches / index.length);
                 var p = Math.round((batch / numBatches * 100) + (p1 / numBatches));
-                progressBar.attr("value", p);
+                //progressBar.attr("value", p);
+                progressBar.val(p);
                 percentElement.find("span").html(p);
 
                 if (images[index] != undefined && !canceled) {
                     processFiles(index);
                 } else {
                     // processing of files finished, start with next batch
-                    progressBar1.attr("value", 100);
+                    //progressBar1.attr("value", 100);
+                    progressBar1.val(100);
                     batch += 1;
                     if (batch < numBatches && !canceled) {
                         processBatch(batch);
@@ -169,7 +174,8 @@ $(document).ready(function () {
                 error = true;
                 resultElement.children().last().remove()
                     .append("<div class='pwas-error'><span class='faded'>" + tmp[0] + "</span><span class='file'>" + tmp[1] + "</span><span class='status error'>" + pwasMsg.error + " " + jqXHR.status + " (" + errorThrown + ")</span></div>");
-                progressBar1.attr("value", Math.round(index / images.length * 100));
+                //progressBar1.attr("value", Math.round(index / images.length * 100));
+                progressBar1.val(Math.round(index / images.length * 100));
 
                 numImages += 1;
                 numFailedImages += 1;
@@ -192,7 +198,9 @@ $(document).ready(function () {
     };
 
     var processBatch = function (batch) {
-        progressBar1.attr("value", 0);
+        //progressBar1.attr("value", 0);
+        progressBar1.val(0);
+        
         resultElement.append("<div><span class='faded'>" + pwasMsg.filelist + "</span></div>")
             .scrollTop(resultElement[0].scrollHeight - resultElement.height()); // scroll to bottom;
 

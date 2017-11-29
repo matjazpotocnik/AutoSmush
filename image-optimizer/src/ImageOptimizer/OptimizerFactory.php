@@ -47,7 +47,8 @@ class OptimizerFactory
             'gifsicle_options' => array('-b', '-O5'),
             'jpegoptim_options' => array('--strip-all', '--all-progressive'),
             'jpegtran_options' => array('-optimize', '-progressive'),
-            'advpng_options' => array('-z', '-4', '-q')
+            'advpng_options' => array('-z', '-4', '-q'),
+            'svgo_options' => array('--disable=cleanupIDs')
         ));
 
         $method = is_callable(array($resolver, 'setDefined')) ? 'setDefined' : 'setOptional';
@@ -60,7 +61,8 @@ class OptimizerFactory
             'gifsicle_bin',
             'jpegoptim_bin',
             'jpegtran_bin',
-            'advpng_bin'
+            'advpng_bin',
+            'svgo_bin'
         ));
 
         return $resolver;
@@ -97,6 +99,10 @@ class OptimizerFactory
         $this->optimizers['gif'] = $this->optimizers['gifsicle'] = $this->wrap(new CommandOptimizer(
             new Command($this->executable('gifsicle'), $this->options['gifsicle_options'])
         ));
+        
+        $this->optimizers['svg'] = $this->optimizers['svgo'] = $this->wrap(new CommandOptimizer(
+            new Command($this->executable('svgo'), $this->options['svgo_options'])
+        ));
 
         $this->optimizers['jpegoptim'] = $this->wrap(new CommandOptimizer(
             new Command($this->executable('jpegoptim'), $this->options['jpegoptim_options'])
@@ -116,6 +122,7 @@ class OptimizerFactory
             TypeGuesser::TYPE_GIF => $this->optimizers['gif'],
             TypeGuesser::TYPE_PNG => $this->optimizers['png'],
             TypeGuesser::TYPE_JPEG => $this->optimizers['jpeg'],
+            TypeGuesser::TYPE_SVG => $this->optimizers['svg'],
         )));
     }
 

@@ -1,8 +1,12 @@
 # Changelog
 
-### 1.1.0 (2017-08-30)
+### 1.1.1 (2017-11-29)
+- support for svg (suggested by adrian)
+
+### 1.1.0 (2017-09-03)
 - bulk mode works on unlimited number of images 
 - optimizing disabled in demo mode
+- support for FieldtypeFieldsetPage
 
 ### 1.0.7 (2017-03-06)
 - support for AdminThemeUikit

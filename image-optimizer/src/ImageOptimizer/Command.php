@@ -20,13 +20,17 @@ final class Command
 
     public function execute(array $customArgs = array())
     {
+        $isWindowsPlatform = defined('PHP_WINDOWS_VERSION_BUILD');
+
         if(!is_executable($this->cmd)) {
-            throw new CommandNotFound(sprintf('Optimizer "%s" not found.', $this->cmd));
+            $ext = strtolower(pathinfo($this->cmd, PATHINFO_EXTENSION));
+            if($isWindowsPlatform && $ext == 'bat') {
+                $this->cmd = "cmd /c " . $this->cmd;
+            }
+            else throw new CommandNotFound(sprintf('Optimizer "%s" not found.', $this->cmd));
         }
 
         $args = array_merge($this->args, $customArgs);
-
-        $isWindowsPlatform = defined('PHP_WINDOWS_VERSION_BUILD');
 
         if($isWindowsPlatform) {
             $suppressOutput = '';
@@ -38,8 +42,8 @@ final class Command
         }
 
         //$command = $escapeShellCmd($this->cmd).' '.implode(' ', array_map($escapeShellCmd, $args)).$suppressOutput;
-				$commandArgs = 0 === count($args) ? '' : ' '.implode(' ', array_map($escapeShellCmd, $args));
-        $command = $escapeShellCmd($this->cmd).$commandArgs.$suppressOutput;        
+        $commandArgs = 0 === count($args) ? '' : ' '.implode(' ', array_map($escapeShellCmd, $args));
+        $command = $escapeShellCmd($this->cmd).$commandArgs.$suppressOutput;
 
         exec($command, $output, $result);
 
