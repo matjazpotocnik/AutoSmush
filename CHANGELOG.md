@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.1.2 (2018-03-09)
+- support for AdminThemeUikit
+
 ### 1.1.1 (2017-11-29)
 - support for svg (suggested by adrian)
 

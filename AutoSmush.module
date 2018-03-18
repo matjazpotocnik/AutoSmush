@@ -6,7 +6,7 @@ require_once /*NoCompile*/__DIR__ . '/ImageOptimizer.php';
  * AutoSmush
  * Optimize images
  *
- * @version 1.1.1
+ * @version 1.1.2
  * @author Roland Toth (tpr)
  * @author Matjaz Potocnik (matjazp)
  * @link https://github.com/matjazpotocnik/AutoSmush
@@ -29,7 +29,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.1.0',
+			'version'  => '1.1.2',
 			'summary'  => 'Optimize/compress images automatically on upload, resize and crop, ' .
 									  'manually by clicking the button or link for each image or variation, ' .
 									  'and in bulk mode for all images sitewide.',
@@ -348,11 +348,12 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			// InputfieldImageEdit__buttons class found, used in PW versions after 3.0.17
 			// there is also InputfieldImage::renderButtons hook that could be used
 			$link = "<a href='$url&var=1' title='$title'>$text</a>";
-			//if($this->wire('user')->admin_theme == 'AdminThemeUikit') {
-			//	$b  = "<button type='button' data-href='$url' data-optimizing='$optimizing' class='InputfieldImageOptimize1 uk-button uk-button-text uk-margin-right'>";
-			//} else {
+			$adminTheme = $this->wire('user')->admin_theme ? $this->wire('user')->admin_theme : $this->wire('config')->defaultAdminTheme;
+			if($adminTheme == 'AdminThemeUikit') {
+				$b  = "<button type='button' data-href='$url' data-optimizing='$optimizing' class='InputfieldImageOptimize1 uk-button uk-button-small uk-button-text uk-margin-small-right'>";
+			} else {
 				$b  = "<button type='button' data-href='$url' data-optimizing='$optimizing' class='InputfieldImageOptimize1 ui-button ui-corner-all ui-state-default'>";
-			//}
+			}
 			$b .= "<span class='ui-button-text'><span class='fa fa-leaf'></span><span> $text</span></span></button>";
 			if(stripos($event->return, '</small>') !== false) { // insert button right before </small> as the last (third) button, after Crop and Variations buttons
 				$event->return = str_replace('</small>', $b . '</small>', $event->return);
@@ -384,8 +385,10 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$b->attr('style', 'display:none');
 
 		$needle = "<ul class='Inputfields'>";
-		//if($this->wire('user')->admin_theme == 'AdminThemeUikit') $needle = "<ul class='Inputfields uk-grid-collapse' uk-grid>";
-		if($this->wire('user')->admin_theme == 'AdminThemeUikit') $needle = "<ul class='Inputfields uk-grid-collapse uk-grid-match' uk-grid uk-height-match='target: > .Inputfield:not(.InputfieldStateCollapsed) > .InputfieldContent'>";
+		// if there's only the default admin theme, $user->admin_theme is not available
+    $adminTheme = $this->wire('user')->admin_theme ? $this->wire('user')->admin_theme : $this->wire('config')->defaultAdminTheme;
+		//if($adminTheme == 'AdminThemeUikit') $needle = "<ul class='Inputfields uk-grid-collapse' uk-grid>";
+		if($adminTheme == 'AdminThemeUikit') $needle = "<ul class='Inputfields uk-grid-collapse uk-grid-match' uk-grid uk-height-match='target: > .Inputfield:not(.InputfieldStateCollapsed) > .InputfieldContent'>";
 		if(stripos($event->return, $needle) !== false) {
 			$event->return = str_replace($needle, $needle . $b->render(), $event->return);
 		}
@@ -1198,6 +1201,16 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	public function ready() {
 
+		// optimize images in auto mode on resize
+		if(isset($this->configData['optAutoAction']) && !$config->demo &&
+			(in_array('optimize_variations', $this->configData['optAutoAction']) || in_array('optimize_variationsCI3', $this->configData['optAutoAction']))) {
+			$this->addHookAfter('ImageSizer::resize', $this, 'checkOptimizeNeeded');
+			$this->addHookAfter('Pageimage::size', $this, 'optimizeOnResize');
+			if($this->wire('modules')->isInstalled('FieldtypeCroppableImage3') && in_array('optimize_variationsCI3', $this->configData['optAutoAction'])) {
+				$this->addHookAfter('ProcessCroppableImage3::executeSave', $this, 'optimizeOnResizeCI3');
+			}
+		}
+
 		$page = $this->wire('page');
 		if($page->template != 'admin') return;
 
@@ -1246,16 +1259,6 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			// delete backup copy - maybe this should run in all cases?
 			if(isset($this->configData['optAutoAction']) && in_array('backup', $this->configData['optAutoAction'])) {
 				$this->addHookAfter('InputfieldFile::processInputDeleteFile', $this, 'deleteBackup');
-			}
-		}
-
-		// optimize images in auto mode on resize
-		if(isset($this->configData['optAutoAction']) && !$config->demo &&
-			(in_array('optimize_variations', $this->configData['optAutoAction']) || in_array('optimize_variationsCI3', $this->configData['optAutoAction']))) {
-			$this->addHookAfter('ImageSizer::resize', $this, 'checkOptimizeNeeded');
-			$this->addHookAfter('Pageimage::size', $this, 'optimizeOnResize');
-			if($this->wire('modules')->isInstalled('FieldtypeCroppableImage3') && in_array('optimize_variationsCI3', $this->configData['optAutoAction'])) {
-				$this->addHookAfter('ProcessCroppableImage3::executeSave', $this, 'optimizeOnResizeCI3');
 			}
 		}
 
