@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.1.3 (2019-01-21)
+- bug fix
+
 ### 1.1.2 (2018-03-09)
 - support for AdminThemeUikit
 

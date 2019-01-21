@@ -6,7 +6,7 @@ require_once /*NoCompile*/__DIR__ . '/ImageOptimizer.php';
  * AutoSmush
  * Optimize images
  *
- * @version 1.1.2
+ * @version 1.1.3
  * @author Roland Toth (tpr)
  * @author Matjaz Potocnik (matjazp)
  * @link https://github.com/matjazpotocnik/AutoSmush
@@ -29,7 +29,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.1.2',
+			'version'  => '1.1.3',
 			'summary'  => 'Optimize/compress images automatically on upload, resize and crop, ' .
 									  'manually by clicking the button or link for each image or variation, ' .
 									  'and in bulk mode for all images sitewide.',
@@ -216,6 +216,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$thumb = $event->return;
 
 		$this->optimize($thumb, false, 'auto');
+		$this->isOptimizeNeeded = false;
 
 		$event->return = $thumb;
 	}
@@ -1201,41 +1202,43 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	public function ready() {
 
-		// optimize images in auto mode on resize
-		if(isset($this->configData['optAutoAction']) && !$config->demo &&
-			(in_array('optimize_variations', $this->configData['optAutoAction']) || in_array('optimize_variationsCI3', $this->configData['optAutoAction']))) {
-			$this->addHookAfter('ImageSizer::resize', $this, 'checkOptimizeNeeded');
-			$this->addHookAfter('Pageimage::size', $this, 'optimizeOnResize');
-			if($this->wire('modules')->isInstalled('FieldtypeCroppableImage3') && in_array('optimize_variationsCI3', $this->configData['optAutoAction'])) {
-				$this->addHookAfter('ProcessCroppableImage3::executeSave', $this, 'optimizeOnResizeCI3');
-			}
-		}
-
-		$page = $this->wire('page');
-		if($page->template != 'admin') return;
-
 		$this->configData = $this->wire('modules')->getModuleConfigData($this);
 
 		$config = $this->wire('config');
 		$input = $this->wire('input');
-		$mode = $input->get('mode');
+		$page = $this->wire('page');
 
 		$this->checkOptimizers();
 		foreach($this->optimizers as $optimizer => $path) $this->optimizeSettings[$optimizer . '_bin'] = $path;
 		if(isset($this->configData['optChain']) && $this->configData['optChain'] == 1) $this->optimizeSettings['execute_first'] = false;
 
+		// handle ajax optimization calls
 		if($input->get('name') === __CLASS__) {
 
 			// optimize images in bulk mode on button click
-			if($mode === 'bulk') $this->bulkOptimize();
+			// this method halts execution
+			if($input->get('mode') === 'bulk') $this->bulkOptimize();
 
 			// optimize images in manual mode on clicking optimize button/link or on image variations modal
-			if($mode === 'optimize') $this->onclickOptimize(($input->get('var') == 1)); // &var=1 => process variation
+			// this method halts execution
+			if($input->get('mode') === 'optimize') $this->onclickOptimize(($input->get('var') == 1)); // &var=1 => process variation
 
 			// add assets
 			$this->wire('modules')->get('JqueryMagnific');
 			$config->scripts->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.js');//?v=' . time());
 			$config->styles->add($config->urls->siteModules . __CLASS__ . '/' . __CLASS__ . '.css');//?v=' . time());
+		}
+
+		if($page->template != 'admin') return;
+
+		// optimize images in auto mode on resize
+		if(isset($this->configData['optAutoAction']) && !$config->demo &&
+			(in_array('optimize_variations', $this->configData['optAutoAction']) || in_array('optimize_variationsCI3', $this->configData['optAutoAction']))) {
+			$this->addHookAfter('ImageSizer::resize', $this, 'checkOptimizeNeeded');
+			$this->addHookAfter('Pageimage::size', $this, 'optimizeOnResize'); //to se izvede resize
+			if($this->wire('modules')->isInstalled('FieldtypeCroppableImage3') && in_array('optimize_variationsCI3', $this->configData['optAutoAction'])) {
+				$this->addHookAfter('ProcessCroppableImage3::executeSave', $this, 'optimizeOnResizeCI3');
+			}
 		}
 
 		// add optimize button/link in manual mode on page/image edit
