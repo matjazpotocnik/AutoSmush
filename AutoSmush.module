@@ -6,7 +6,7 @@ require_once /*NoCompile*/__DIR__ . '/ImageOptimizer.php';
  * AutoSmush
  * Optimize images
  *
- * @version 1.1.4
+ * @version 1.1.5
  * @author Roland Toth (tpr)
  * @author Matjaz Potocnik (matjazp)
  * @link https://github.com/matjazpotocnik/AutoSmush
@@ -29,7 +29,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.1.4',
+			'version'  => '1.1.5',
 			'summary'  => 'Optimize/compress images automatically on upload, resize and crop, ' .
 									  'manually by clicking the button or link for each image or variation, ' .
 									  'and in bulk mode for all images sitewide.',
@@ -46,6 +46,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 *
 	 */
 	const WEBSERVICE = 'http://api.resmush.it/ws.php?exif=true&img=';
+	const WEBSERVICE_NOEXIF = 'http://api.resmush.it/ws.php?img=';
 	const API_SIZELIMIT = 5242880; // 5 MB limit
 	const API_ALLOWED_EXTENSIONS = 'png, jpg, jpeg, gif';
 	const JPG_QUALITY_DEFAULT = '90';
@@ -195,7 +196,8 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'optBulkEngine' => 'resmushit',
 			'optBulkAction' => array(),
 			'optBulkQuality' => self::JPG_QUALITY_DEFAULT,
-			'optChain' => ''
+			'optChain' => '',
+			'optNoExif' => ''
 		);
 	}
 
@@ -1001,7 +1003,11 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			$content .= file_get_contents($img->filename) . $eol;
 			$content .= '--' . $boundary . '--' . $eol;
 			$http->setHeader('Content-Type', 'multipart/form-data; boundary=' . $boundary);
-			$data = $http->post(self::WEBSERVICE . '&qlty=' . $q, $content);
+			if($this->configData["optNoExif"] == 1) {
+				$data = $http->post(self::WEBSERVICE_NOEXIF . '&qlty=' . $q, $content);
+			} else {
+				$data = $http->post(self::WEBSERVICE . '&qlty=' . $q, $content);
+			}
 
 			if(is_bool($data)) {
 				$error = 'Error optimizing ' . $img->filename . ', ';
@@ -1320,6 +1326,21 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$field->label = $this->_('Enable optimizers chaining');
 		$field->description = $this->_('If unchecked, only the first available optimizer for specific image type will run (default). If checked, all available optimizers will run one after another.');
 		$field->value = $data['optChain'];
+		$field->checked = ($field->value == 1) ? 'checked' : '';
+		$fieldset->add($field);
+
+		// reSmush.it tools info
+		$fieldset = $modules->get('InputfieldFieldset');
+		$fieldset->name = 'resmushitoptimizers_fieldset';
+		$fieldset->label = $this->_('Advanced options for reSmush.it online service');
+		$fieldset->collapsed = Inputfield::collapsedYes;
+		$fields->add($fieldset);
+
+		$field = $modules->get('InputfieldCheckbox');
+		$field->name = 'optNoExif';
+		$field->label = $this->_('Remove EXIF data');
+		$field->description = $this->_('By default, EXIF data is preserved, check this option to remove it from optimized images.');
+		$field->value = $data['optNoExif'];
 		$field->checked = ($field->value == 1) ? 'checked' : '';
 		$fieldset->add($field);
 

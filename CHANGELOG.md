@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.1.5 (2019-08-22)
+- add support for exif data removal for reShmush.it
+
 ### 1.1.4 (2019-04-07)
 - split "Automatic mode" to "Automatic mode in Admin" and "Automatic mode in Templates"
 - add optimize on Pageimage->url()/add()/size()/width()/height()/crop() in "Automatic mode in Templates"
