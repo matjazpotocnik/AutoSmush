@@ -6,7 +6,7 @@ require_once /*NoCompile*/__DIR__ . '/ImageOptimizer.php';
  * AutoSmush
  * Optimize images
  *
- * @version 1.1.5
+ * @version 1.1.6
  * @author Roland Toth (tpr)
  * @author Matjaz Potocnik (matjazp)
  * @link https://github.com/matjazpotocnik/AutoSmush
@@ -29,7 +29,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
 			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
-			'version'  => '1.1.5',
+			'version'  => '1.1.6',
 			'summary'  => 'Optimize/compress images automatically on upload, resize and crop, ' .
 									  'manually by clicking the button or link for each image or variation, ' .
 									  'and in bulk mode for all images sitewide.',
@@ -777,6 +777,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 			$this->log->save($m . $file . $msg);
 			if($bulk == 1) {
 				$status['error'] = 'image not found';
+				if(pathinfo($file, PATHINFO_EXTENSION) == 'webp') $status['error'] = 'unsupported image type';
 				header('Content-Type: application/json');
 				echo json_encode($status);
 			} else {
@@ -1100,7 +1101,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 * @return InputfieldWrapper
 	 *
 	 */
-	public function getModuleConfigInputfields(array $data) {
+	public function getModuleConfigInputfields($data) {
 
 		$fields = new InputfieldWrapper();
 		$modules = $this->wire('modules');
@@ -1417,6 +1418,9 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$test1 = substr($variationName, 0, strpos($variationName, '.'));
 		$test2 = substr($originalName, 0, strpos($originalName, '.'));
 		if($test1 !== $test2) return false;
+
+		// webp is not considered as variation
+		if(pathinfo($variationName, PATHINFO_EXTENSION) == 'webp') return false;
 
 		return true;
 	}

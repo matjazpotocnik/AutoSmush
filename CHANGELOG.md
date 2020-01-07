@@ -1,5 +1,8 @@
 # Changelog
 
+### 1.1.6 (2020-01-07)
+- support for webp (not considered as variation)
+
 ### 1.1.5 (2019-08-22)
 - add support for exif data removal for reShmush.it
 
