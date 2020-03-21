@@ -655,7 +655,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 		// resmushit doesn't support svg
 		if($img->ext == 'svg' && ($this->optimizers['svgo'] == "" || $this->configData["optApiEngine"] == 'resmushit')) {
-			$this->log->save("Unsupported extension svg");
+			//$this->log->save("Unsupported extension svg"); //disabled to reduce log size, requested by Adrian
 			return;
 		}
 
@@ -681,8 +681,6 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 		//$optimized = str_replace($match[2], '', $url) . $varBasename;
 		$optimized = str_replace($filename, '', $url) . $varBasename;
-
-		//bd($optimized, "optimizeOnAccess, optimized url=");
 
 		// return url with optimized variation image
 		$event->return = $optimized;
