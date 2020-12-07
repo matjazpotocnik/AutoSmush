@@ -28,7 +28,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		return array(
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
-			'author'   => 'Roland Toth, Matjaž Potočnik',
+			'author'   => 'tpr, matjazp',
 			'version'  => '1.1.6',
 			'summary'  => 'Optimize/compress images automatically on upload, resize and crop, ' .
 									  'manually by clicking the button or link for each image or variation, ' .
