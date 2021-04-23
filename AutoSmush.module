@@ -28,11 +28,11 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		return array(
 			'title'    => 'Auto Smush',
 			'class'    => 'AutoSmush',
-			'author'   => 'tpr, matjazp',
+			'author'   => 'Roland Toth, Matja&#382; Poto&#269;nik',
 			'version'  => '1.1.6',
 			'summary'  => 'Optimize/compress images automatically on upload, resize and crop, ' .
-									  'manually by clicking the button or link for each image or variation, ' .
-									  'and in bulk mode for all images sitewide.',
+										'manually by clicking the button or link for each image or variation, ' .
+										'and in bulk mode for all images sitewide.',
 			'href'     => 'https://processwire.com/talk/topic/14818-auto-smush/',
 			'requires' => 'ProcessWire>=2.5.5, PHP>=5.4.0',
 			'icon'     => 'leaf',
@@ -208,13 +208,14 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 	 */
 	public function init() {
 		$cls = strtolower(__CLASS__);
+		$log = $this->wire('log');
 
 		// pruneBytes returns error in PW prior to 3.0.13 if file does not exist
-		if(!file_exists($this->wire('log')->getFilename($cls))) {
-			$this->wire('log')->save($cls, 'log file created', array('showUser' => false, 'showURL' => false));
+		if(!file_exists($log->getFilename($cls))) {
+			$log->save($cls, 'log file created', array('showUser' => false, 'showURL' => false));
 		}
 
-		$this->log = new FileLog($this->wire('log')->getFilename($cls));
+		$this->log = new FileLog($log->getFilename($cls));
 		method_exists($this->log, __CLASS__) ? $this->log->pruneBytes(20000) : $this->log->prune(20000);
 
 		$paths = $this->wire('config')->paths;
