@@ -123,7 +123,6 @@ progress,
 }
 
 .faded {
-    /*font-size: 12px;*/
     color: #666;
     margin-right: 6px;
     display: inline-block;
@@ -152,28 +151,12 @@ progress {
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) inset;
 }
 
-progress::-webkit-progress-bar {
-    background: #EEE;
-    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) inset;
-    border-radius: 3px;
-}
-progress::-webkit-progress-value {
-    background: #3EB998;
-    border-radius: 3px;
-}
-progress::-moz-progress-bar {
-    background: #3EB998;
-    border-radius: 3px;
-}
-
-progress.error::-moz-progress-bar {
-    background: #a00;
-}
-progress.error::-webkit-progress-bar {
-    background: #a00;
-}
 progress.error + #percent {
     color: #fff;
+}
+
+progress.error::-webkit-progress-bar {
+    background: #a00;
 }
 progress.error::-webkit-progress-value {
     background: #600;
