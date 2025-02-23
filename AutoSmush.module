@@ -549,8 +549,10 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 				$b  = "<button type='button' data-href='$url' data-optimizing='$optimizing' class='InputfieldImageOptimize1 ui-button ui-corner-all ui-state-default'>";
 			}
 			$b .= "<span class='ui-button-text'><span class='fa fa-leaf'></span><span> $text</span></span></button>";
-			if(stripos($event->return, '</small>') !== false) { // insert button right before </small> as the last (third) button, after Crop and Variations buttons
-				$event->return = str_replace('</small>', $b . '</small>', $event->return);
+			$pos = stripos($event->return, '</small>'); //$needle=</small>, haystack=$event->return
+			if($pos !== false) { // insert button right before </small> as the last (third) button, after Crop and Variations buttons
+				//$event->return = str_replace('</small>', $b . '</small>', $event->return); //replace all needles in a haystack
+				$event->return = substr_replace($event->return, $b . '</small>', $pos, strlen('</small>')); //replace first needle in a haystack
 			}
 		} else {
 			$this->log->save('addOptButton: class InputfieldFileName/InputfieldImageedit__buttons not found');
@@ -701,7 +703,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 		$input = $this->wire('input');
 		$status = array(
 			'error'           => null, // various errors
-			'error_api'       => null, // erros from reSmush.it
+			'error_api'       => null, // errors from reSmush.it
 			'percentNew'      => '0', // reduction percentage
 			'file'            => '', // image name
 			'basedir'         => '', // page id where image is eg. 1234
@@ -1147,7 +1149,7 @@ class AutoSmush extends FieldtypeImage implements Module, ConfigurableModule {
 
 		// automatic mode in templates (frontend)
 		$fieldset              = $modules->get('InputfieldFieldset');
-		$fieldset->label       = $this->_('Automatic Mode in Templates (frontend API)');
+		$fieldset->label       = $this->_('Automatic Mode in T'.'emplates (frontend API)');
 		$fieldset->description = $this->_('Automatically optimize images on API calls (url, add, size).');
 		$fields->add($fieldset);
 
