@@ -15,12 +15,12 @@ class OptimizerFactory
 {
     const OPTIMIZER_SMART = 'smart';
 
-    private $optimizers = array();
+    private $optimizers = [];
     private $options;
     private $executableFinder;
     private $logger;
 
-    public function __construct(array $options = array(), LoggerInterface $logger = null)
+    public function __construct(array $options = [], ?LoggerInterface $logger = null)
     {
         $this->executableFinder = new ExecutableFinder();
         $this->logger = $logger ?: new NullLogger();
@@ -37,23 +37,21 @@ class OptimizerFactory
     protected function getOptionsResolver()
     {
         $resolver = new OptionsResolver();
-        $resolver->setDefaults(array(
+        $resolver->setDefaults([
             'ignore_errors' => true,
             'execute_first' => false,
-            'optipng_options' => array('-i0', '-o2', '-quiet'),
-            'pngquant_options' => array('--force'),
-            'pngcrush_options' => array('-reduce', '-q', '-ow'),
-            'pngout_options' => array('-s3', '-q', '-y'),
-            'gifsicle_options' => array('-b', '-O5'),
-            'jpegoptim_options' => array('--strip-all', '--all-progressive'),
-            'jpegtran_options' => array('-optimize', '-progressive'),
-            'advpng_options' => array('-z', '-4', '-q'),
+            'optipng_options' => ['-i0', '-o2', '-quiet'],
+            'pngquant_options' => ['--force'],
+            'pngcrush_options' => ['-reduce', '-q', '-ow'],
+            'pngout_options' => ['-s3', '-q', '-y'],
+            'gifsicle_options' => ['-b', '-O5'],
+            'jpegoptim_options' => ['--strip-all', '--all-progressive'],
+            'jpegtran_options' => ['-optimize', '-progressive'],
+            'advpng_options' => ['-z', '-4', '-q'],
             'svgo_options' => array('--disable=cleanupIDs')
-        ));
+        ]);
 
-        $method = is_callable(array($resolver, 'setDefined')) ? 'setDefined' : 'setOptional';
-
-        $resolver->$method(array(
+        $resolver->setDefined([
             'optipng_bin',
             'pngquant_bin',
             'pngcrush_bin',
@@ -63,7 +61,7 @@ class OptimizerFactory
             'jpegtran_bin',
             'advpng_bin',
             'svgo_bin'
-        ));
+        ]);
 
         return $resolver;
     }
@@ -75,9 +73,9 @@ class OptimizerFactory
         ));
         $this->optimizers['pngquant'] = $this->wrap(new CommandOptimizer(
             new Command($this->executable('pngquant'), $this->options['pngquant_options']),
-            function($filepath){
+            function ($filepath) {
                 $ext = pathinfo($filepath, PATHINFO_EXTENSION);
-                return array('--ext='.($ext ? '.'.$ext : ''), '--');
+                return ['--ext=' . ($ext ? '.' . $ext : ''), '--'];
             }
         ));
         $this->optimizers['pngcrush'] = $this->wrap(new CommandOptimizer(
@@ -89,12 +87,12 @@ class OptimizerFactory
         $this->optimizers['advpng'] = $this->wrap(new CommandOptimizer(
             new Command($this->executable('advpng'), $this->options['advpng_options'])
         ));
-        $this->optimizers['png'] = new ChainOptimizer(array(
+        $this->optimizers['png'] = new ChainOptimizer([
             $this->optimizers['optipng'], //MP reversed the order so optipng is first
             $this->optimizers['pngquant'],
             $this->optimizers['pngcrush'],
             $this->optimizers['advpng']
-        ), $this->options['execute_first']); //MP if true, just first optimizer will run, if false all optimizers will run
+        ], $this->options['execute_first']); //MP if true, just first optimizer will run, if false all optimizers will run
 
         $this->optimizers['gif'] = $this->optimizers['gifsicle'] = $this->wrap(new CommandOptimizer(
             new Command($this->executable('gifsicle'), $this->options['gifsicle_options'])
@@ -110,20 +108,20 @@ class OptimizerFactory
         $this->optimizers['jpegtran'] = $this->wrap(new CommandOptimizer(
             new Command($this->executable('jpegtran'), $this->options['jpegtran_options']),
             function ($filepath) {
-                return array('-outfile', $filepath);
+                return ['-outfile', $filepath];
             }
         ));
-        $this->optimizers['jpeg'] = $this->optimizers['jpg'] = new ChainOptimizer(array(
+        $this->optimizers['jpeg'] = $this->optimizers['jpg'] = new ChainOptimizer([
             $this->unwrap($this->optimizers['jpegoptim']), //MP reversed the order so jpegoptim is first
             $this->unwrap($this->optimizers['jpegtran']),
-        ), $this->options['execute_first']); //MP if true, just first optimizer will run, if false all optimizers will run
+        ], $this->options['execute_first']); //MP if true, just first optimizer will run, if false all optimizers will run
 
-        $this->optimizers[self::OPTIMIZER_SMART] = $this->wrap(new SmartOptimizer(array(
+        $this->optimizers[self::OPTIMIZER_SMART] = $this->wrap(new SmartOptimizer([
             TypeGuesser::TYPE_GIF => $this->optimizers['gif'],
             TypeGuesser::TYPE_PNG => $this->optimizers['png'],
             TypeGuesser::TYPE_JPEG => $this->optimizers['jpeg'],
             TypeGuesser::TYPE_SVG => $this->optimizers['svg'],
-        )));
+        ]));
     }
 
     private function wrap(Optimizer $optimizer)
@@ -139,7 +137,7 @@ class OptimizerFactory
     private function executable($name)
     {
         $executableFinder = $this->executableFinder;
-        return $this->option($name.'_bin', function() use($name, $executableFinder){
+        return $this->option($name . '_bin', function () use ($name, $executableFinder) {
             return $executableFinder->find($name, $name);
         });
     }

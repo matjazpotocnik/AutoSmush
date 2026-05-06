@@ -14,4 +14,4 @@ interface Optimizer
      * @throws Exception
      */
     public function optimize($filepath);
-} 
+}

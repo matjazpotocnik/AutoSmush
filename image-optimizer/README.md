@@ -1,5 +1,7 @@
 # Image Optimizer
 
+> Maintenance note: AutoSmush vendors this library and maintains the bundled copy for its own compatibility baseline. The current AutoSmush baseline targets PHP 8.1+ and Symfony 6.4 components rather than the last upstream package release.
+
 This library is handy and very easy to use optimizer for image files. It uses [optipng][2], [pngquant][1], [jpegoptim][6] and few more libraries,
 so before use it you should install proper libraries on your server. Project contains Vagrantfile that defines testing
 virtual machine with all libraries installed, so you can check Vagrantfile how to install all those stuff.

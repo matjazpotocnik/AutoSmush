@@ -1,5 +1,8 @@
 # Changelog
 
+### 2.0.0 (2026-05-04)
+- breaking change: module is namespaced, min PHP 8.1, min PW 3.0.212
+
 ### 1.1.6 (2020-01-07)
 - support for webp (not considered as variation)
 

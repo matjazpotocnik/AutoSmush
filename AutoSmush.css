@@ -24,9 +24,9 @@ progress,
     max-height: 240px;
     overflow: auto;
     padding: 8px;
-    background: #f1f2f3;
+    background: var(--pw-inputs-background, #f1f2f3);
     border-radius: 2px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--pw-border-color, #ddd);
     margin-bottom: -16px;
 }
 
@@ -56,7 +56,7 @@ progress,
     left: 4px;
     display: inline-block;
     font: normal normal normal 14px/1 FontAwesome;
-    color: #3EB998;
+    color: var(--pw-alert-success, #3EB998);
     text-rendering: auto;
     -webkit-font-smoothing: antialiased;
     margin-right: 6px;
@@ -68,7 +68,7 @@ progress,
     left: 4px;
     -webkit-animation: fa-spin 2s infinite linear;
     animation: fa-spin 2s infinite linear;
-    color: #5295D2;
+    color: var(--pw-main-color, #5295D2);
 }
 #result div.pwas-error:before,
 #result a.pwas-error:before {
@@ -76,7 +76,7 @@ progress,
     top: 3px;
     -webkit-animation: none;
     animation: none;
-    color: #B94C51;
+    color: var(--pw-alert-danger, #B94C51);
     background-color: inherit;
 }
 #result div.info:before {
@@ -94,7 +94,7 @@ progress,
 #result div .status {
     display: inline-block;
     margin-left: 8px;
-    background-color: #5295D2;
+    /*background-color: var(--pw-main-color, #5295D2);*/
     padding: 1px 4px;
     color: #fff;
     border-radius: 3px;
@@ -106,34 +106,33 @@ progress,
 }
 #result a .status.error,
 #result div .status.error {
-    background-color: #B94C51;
+    background-color: var(--pw-alert-danger, #B94C51);
+}
+
+#result a .status.skipped,
+#result div .status.skipped {
+    /*background-color: var(--pw-muted-color, #999);*/
+    color: var(--pw-muted-color, #5295D2);
 }
 
 #percent {
     position: relative;
-    top: -34px;
+    top: -35px;
     margin-bottom: -34px;
     margin-left: 16px;
     display: block;
-    color: #333;
+    color: #fff;
+    text-shadow: 0 0 2px black, 0 0 2px black, 0 0 2px black;
 }
 
 .start {
-    color: #333;
+    color: var(--pw-text-color, #333);
 }
 
 .faded {
-    color: #666;
+    color: var(--pw-muted-color, #666);
     margin-right: 6px;
     display: inline-block;
-}
-
-.done {
-    /* what? */
-}
-
-progress.canceled {
-    /* what? */
 }
 
 progress {
@@ -146,29 +145,29 @@ progress {
 
     /* Firefox */
     border: none;
-    background: #EEE;
+    background: var(--pw-inputs-background, #EEE);
     border-radius: 3px;
     box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2) inset;
 }
 
-progress.error + #percent {
-    color: #fff;
-}
-
 progress.error::-webkit-progress-bar {
-    background: #a00;
+    background: var(--pw-alert-danger, #a00);
 }
 progress.error::-webkit-progress-value {
-    background: #600;
+    background: var(--pw-alert-danger, #600);
 }
 progress.error::-moz-progress-bar {
-    background: #600;
+    background: var(--pw-alert-danger, #600);
 }
 
 #progbarwrapper .InputfieldContent {
     border: 0;
     margin: 0;
     padding: 0;
+}
+.AdminThemeUikitDefault #progbarwrapper {
+    padding: 0;
+    outline: none !important;
 }
 
 #cancel_all {
@@ -188,7 +187,7 @@ progress.error::-moz-progress-bar {
     overflow: hidden;
 }
 
-.AdminThemeUikit #percent {
+.xAdminThemeUikit #percent {
     top: -37px;
 }
 
@@ -210,17 +209,21 @@ progress.error::-moz-progress-bar {
     top: 4px;
 }
 
+.AdminThemeUikitDefault #result {
+    margin-bottom: -4px;
+}
+
 progress::-webkit-progress-bar {
-    background: #EEE;
+    background: var(--pw-inputs-background, #EEE);
     box-shadow: none;
     border-radius: 0;
 }
 progress::-webkit-progress-value {
-    background: #3EB998;
+    background: var(--pw-main-color, #5295D2);
     border-radius: 0;
 }
 progress::-moz-progress-bar {
-    background: #3EB998;
+    background: var(--pw-main-color, #5295D2);
     border-radius: 0;
 }
 
@@ -230,26 +233,16 @@ img.mfp-img {
 }
 
 .InputfieldForm .inputError {
-    color: #d94C51;
-    background-color: #d94C51;
+    color: var(--pw-error-inline-text-color, #fff);
+    background-color: var(--pw-alert-danger, #d94C51);
 }
-
-/*
-.InputfieldForm label.InputfieldHeader {
-    padding-top: .4em;
-}
-
-.AdminThemeUikit .InputfieldForm label.InputfieldHeader {
-    padding-top: 20px;
-}
-*/
 
 #Inputfield_optAutoAction_backup {
     margin-left: 1.5em;
 }
 
 .optDisabled {
-    color: #bbb;
+    color: var(--pw-muted-color, #bbb);
 }
 
 #ModuleEditForm .AdminDataTable tr td:first-child {

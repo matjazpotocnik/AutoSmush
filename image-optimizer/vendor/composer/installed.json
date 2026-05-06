@@ -1,149 +1,271 @@
-[
-    {
-        "name": "psr/log",
-        "version": "1.0.0",
-        "version_normalized": "1.0.0.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/php-fig/log.git",
-            "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/php-fig/log/zipball/fe0936ee26643249e916849d48e3a51d5f5e278b",
-            "reference": "fe0936ee26643249e916849d48e3a51d5f5e278b",
-            "shasum": ""
-        },
-        "time": "2012-12-21 11:40:51",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-0": {
-                "Psr\\Log\\": ""
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
+{
+        "packages": [
+                {
+                        "name": "psr/log",
+                        "version": "1.1.4",
+                        "version_normalized": "1.1.4.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/php-fig/log.git",
+                                "reference": "d49695b909c3b7628b6289db5479a1c204601f11"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/php-fig/log/zipball/d49695b909c3b7628b6289db5479a1c204601f11",
+                                "reference": "d49695b909c3b7628b6289db5479a1c204601f11",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": ">=5.3.0"
+                        },
+                        "time": "2021-05-03T11:20:27+00:00",
+                        "type": "library",
+                        "extra": {
+                                "branch-alias": {
+                                        "dev-master": "1.1.x-dev"
+                                }
+                        },
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Psr\\Log\\": "Psr/Log/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "PHP-FIG",
+                                        "homepage": "https://www.php-fig.org/"
+                                }
+                        ],
+                        "description": "Common interface for logging libraries",
+                        "homepage": "https://github.com/php-fig/log",
+                        "keywords": [
+                                "log",
+                                "psr",
+                                "psr-3"
+                        ],
+                        "support": {
+                                "source": "https://github.com/php-fig/log/tree/1.1.4"
+                        },
+                        "install-path": "../psr/log"
+                },
+                {
+                        "name": "symfony/deprecation-contracts",
+                        "version": "v3.6.0",
+                        "version_normalized": "3.6.0.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/symfony/deprecation-contracts.git",
+                                "reference": "63afe740e99a13ba87ec199bb07bbdee937a5b62"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/63afe740e99a13ba87ec199bb07bbdee937a5b62",
+                                "reference": "63afe740e99a13ba87ec199bb07bbdee937a5b62",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": ">=8.1"
+                        },
+                        "time": "2024-09-25T14:21:43+00:00",
+                        "type": "library",
+                        "extra": {
+                                "thanks": {
+                                        "url": "https://github.com/symfony/contracts",
+                                        "name": "symfony/contracts"
+                                },
+                                "branch-alias": {
+                                        "dev-main": "3.6-dev"
+                                }
+                        },
+                        "installation-source": "dist",
+                        "autoload": {
+                                "files": [
+                                        "function.php"
+                                ]
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Nicolas Grekas",
+                                        "email": "p@tchwork.com"
+                                },
+                                {
+                                        "name": "Symfony Community",
+                                        "homepage": "https://symfony.com/contributors"
+                                }
+                        ],
+                        "description": "A generic function and convention to trigger deprecation notices",
+                        "homepage": "https://symfony.com",
+                        "support": {
+                                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.6.0"
+                        },
+                        "funding": [
+                                {
+                                        "url": "https://symfony.com/sponsor",
+                                        "type": "custom"
+                                },
+                                {
+                                        "url": "https://github.com/fabpot",
+                                        "type": "github"
+                                },
+                                {
+                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                                        "type": "tidelift"
+                                }
+                        ],
+                        "install-path": "../symfony/deprecation-contracts"
+                },
+                {
+                        "name": "symfony/options-resolver",
+                        "version": "v6.4.30",
+                        "version_normalized": "6.4.30.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/symfony/options-resolver.git",
+                                "reference": "eeaa8cabe54c7b3516938c72a4a161c0cc80a34f"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/symfony/options-resolver/zipball/eeaa8cabe54c7b3516938c72a4a161c0cc80a34f",
+                                "reference": "eeaa8cabe54c7b3516938c72a4a161c0cc80a34f",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": ">=8.1",
+                                "symfony/deprecation-contracts": "^2.5|^3"
+                        },
+                        "time": "2025-11-12T13:06:53+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Symfony\\Component\\OptionsResolver\\": ""
+                                },
+                                "exclude-from-classmap": [
+                                        "/Tests/"
+                                ]
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Fabien Potencier",
+                                        "email": "fabien@symfony.com"
+                                },
+                                {
+                                        "name": "Symfony Community",
+                                        "homepage": "https://symfony.com/contributors"
+                                }
+                        ],
+                        "description": "Provides an improved replacement for the array_replace PHP function",
+                        "homepage": "https://symfony.com",
+                        "keywords": [
+                                "config",
+                                "configuration",
+                                "options"
+                        ],
+                        "support": {
+                                "source": "https://github.com/symfony/options-resolver/tree/v6.4.30"
+                        },
+                        "funding": [
+                                {
+                                        "url": "https://symfony.com/sponsor",
+                                        "type": "custom"
+                                },
+                                {
+                                        "url": "https://github.com/fabpot",
+                                        "type": "github"
+                                },
+                                {
+                                        "url": "https://github.com/nicolas-grekas",
+                                        "type": "github"
+                                },
+                                {
+                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                                        "type": "tidelift"
+                                }
+                        ],
+                        "install-path": "../symfony/options-resolver"
+                },
+                {
+                        "name": "symfony/process",
+                        "version": "v6.4.33",
+                        "version_normalized": "6.4.33.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/symfony/process.git",
+                                "reference": "c46e854e79b52d07666e43924a20cb6dc546644e"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/symfony/process/zipball/c46e854e79b52d07666e43924a20cb6dc546644e",
+                                "reference": "c46e854e79b52d07666e43924a20cb6dc546644e",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": ">=8.1"
+                        },
+                        "time": "2026-01-23T16:02:12+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Symfony\\Component\\Process\\": ""
+                                },
+                                "exclude-from-classmap": [
+                                        "/Tests/"
+                                ]
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Fabien Potencier",
+                                        "email": "fabien@symfony.com"
+                                },
+                                {
+                                        "name": "Symfony Community",
+                                        "homepage": "https://symfony.com/contributors"
+                                }
+                        ],
+                        "description": "Executes commands in sub-processes",
+                        "homepage": "https://symfony.com",
+                        "support": {
+                                "source": "https://github.com/symfony/process/tree/v6.4.33"
+                        },
+                        "funding": [
+                                {
+                                        "url": "https://symfony.com/sponsor",
+                                        "type": "custom"
+                                },
+                                {
+                                        "url": "https://github.com/fabpot",
+                                        "type": "github"
+                                },
+                                {
+                                        "url": "https://github.com/nicolas-grekas",
+                                        "type": "github"
+                                },
+                                {
+                                        "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                                        "type": "tidelift"
+                                }
+                        ],
+                        "install-path": "../symfony/process"
+                }
         ],
-        "authors": [
-            {
-                "name": "PHP-FIG",
-                "homepage": "http://www.php-fig.org/"
-            }
-        ],
-        "description": "Common interface for logging libraries",
-        "keywords": [
-            "log",
-            "psr",
-            "psr-3"
-        ]
-    },
-    {
-        "name": "symfony/process",
-        "version": "v3.0.3",
-        "version_normalized": "3.0.3.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/symfony/process.git",
-            "reference": "dfecef47506179db2501430e732adbf3793099c8"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/symfony/process/zipball/dfecef47506179db2501430e732adbf3793099c8",
-            "reference": "dfecef47506179db2501430e732adbf3793099c8",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.5.9"
-        },
-        "time": "2016-02-02 13:44:19",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "3.0-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "Symfony\\Component\\Process\\": ""
-            },
-            "exclude-from-classmap": [
-                "/Tests/"
-            ]
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Fabien Potencier",
-                "email": "fabien@symfony.com"
-            },
-            {
-                "name": "Symfony Community",
-                "homepage": "https://symfony.com/contributors"
-            }
-        ],
-        "description": "Symfony Process Component",
-        "homepage": "https://symfony.com"
-    },
-    {
-        "name": "symfony/options-resolver",
-        "version": "v3.0.3",
-        "version_normalized": "3.0.3.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/symfony/options-resolver.git",
-            "reference": "bc7ee3ef3905f7c21fbed4e921cb39d6518b1300"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/symfony/options-resolver/zipball/bc7ee3ef3905f7c21fbed4e921cb39d6518b1300",
-            "reference": "bc7ee3ef3905f7c21fbed4e921cb39d6518b1300",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.5.9"
-        },
-        "time": "2016-01-21 09:38:31",
-        "type": "library",
-        "extra": {
-            "branch-alias": {
-                "dev-master": "3.0-dev"
-            }
-        },
-        "installation-source": "dist",
-        "autoload": {
-            "psr-4": {
-                "Symfony\\Component\\OptionsResolver\\": ""
-            },
-            "exclude-from-classmap": [
-                "/Tests/"
-            ]
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Fabien Potencier",
-                "email": "fabien@symfony.com"
-            },
-            {
-                "name": "Symfony Community",
-                "homepage": "https://symfony.com/contributors"
-            }
-        ],
-        "description": "Symfony OptionsResolver Component",
-        "homepage": "https://symfony.com",
-        "keywords": [
-            "config",
-            "configuration",
-            "options"
-        ]
-    }
-]
+        "dev": true,
+        "dev-package-names": []
+}

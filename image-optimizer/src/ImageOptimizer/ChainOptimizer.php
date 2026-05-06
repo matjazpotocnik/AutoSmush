@@ -17,7 +17,7 @@ class ChainOptimizer implements Optimizer
     public function __construct(array $optimizers, $executeFirst = false)
     {
         $this->optimizers = $optimizers;
-        $this->executeFirst = (boolean) $executeFirst;
+        $this->executeFirst = (bool) $executeFirst;
     }
 
     public function optimize($filepath)

@@ -135,6 +135,10 @@ $(document).ready(function () {
                     } else if (data.error !== null) {
                         status = "<span class='status error'>" + data.error + "</span>";
                         numFailedImages += 1;
+                    } else if (data.skipped) {
+                        status = "<span class='status skipped'>" + data.skipped + "</span>";
+                        error = false;
+                        c = "";
                     } else if (data.percentNew !== null) {
                         status = "<span class='status percent'>" + data.percentNew + "</span>"; //reduction percentage
                         error = false;

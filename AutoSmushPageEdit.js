@@ -6,29 +6,7 @@
 $(document).ready(function () {
     "use strict";
 
-    // for PW before 3.0.17
-    $(document).on("click", "a.InputfieldImageOptimize", function (e) {
-        e.preventDefault();
-        var currentItem = $(this);
-        var optUrl = currentItem.attr("href");
-        //currentItem.html("Optimizing <i class='fa fa-spin fa-spinner fa-fw'></i>");
-        currentItem.html($(this).attr("data-optimizing") + " <i class='fa fa-spin fa-spinner fa-fw'></i>");
-
-        $.ajax({
-            url: optUrl,
-            cache: false,
-            success: function (data) {
-                currentItem.text(data);
-                return false;
-            },
-            error: function (xhr, textStatus) {
-                currentItem.text(textStatus);
-                return false;
-            }
-        });
-    });
-
-    $(document).on("click", "button.InputfieldImageOptimize1", function () {
+    $(document).on("click", "button.InputfieldImageOptimize", function () {
         var currentItem = $(this);
         var optUrl = currentItem.attr("data-href");
         var optText = currentItem.find("span:eq(2)"); //third span
@@ -97,11 +75,11 @@ $(document).ready(function () {
     });
 
     // adds Optimizing text to the spinner
-    if(config.AutoSmush) {
+    if(config.uploadSpinnerMsg) {
         $(document).on("change", '.InputfieldImage' ,function () {
             var spinner = $(this).find(".gridImage__resize");
             //console.log(spinner.html());
-            spinner.html("<i class='fa fa-spinner fa-spin fa-2x fa-fw'></i><span style='font-size:14px'> " + config.AutoSmush + "</span>");
+            spinner.html("<i class='fa fa-spinner fa-spin fa-2x fa-fw'></i><span style='font-size:14px'> " + config.uploadSpinnerMsg + "</span>");
         });
     }
 

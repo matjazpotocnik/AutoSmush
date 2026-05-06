@@ -49,7 +49,7 @@ final class Command
 
         if($result == 127) {
             throw new CommandNotFound(sprintf('Command "%s" not found.', $command));
-        } else if($result != 0) {
+        } elseif($result != 0) {
             throw new Exception(sprintf('Command failed, return code: %d, command: %s', $result, $command));
         }
     }

@@ -15,7 +15,7 @@ class SmartOptimizer implements Optimizer
     private $optimizers;
     private $typeGuesser;
 
-    public function __construct(array $optimizers, TypeGuesser $typeGuesser = null)
+    public function __construct(array $optimizers, ?TypeGuesser $typeGuesser = null)
     {
         $this->optimizers = $optimizers;
         $this->typeGuesser = $typeGuesser ?: new SmartTypeGuesser();
