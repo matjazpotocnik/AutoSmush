@@ -6,6 +6,13 @@
 $(document).ready(function () {
     "use strict";
 
+    // CSRF token for POST requests (standard PW pattern)
+    var $postToken = $("input._post_token");
+    var csrfName = $postToken.attr("name");
+    var csrfValue = $postToken.val();
+    var csrfData = {};
+    csrfData[csrfName] = csrfValue;
+
     var pwasBtn = "#optimize_all";
     var pwcancelBtn = "#cancel_all";
     var moduleForm = "#ModuleEditForm #Inputfield_bulkoptimize_fieldset input";
@@ -27,7 +34,6 @@ $(document).ready(function () {
         canceling: $(pwcancelBtn).data("cancelingMsg")
     };
     var canceled = false;
-    var error = false;
     var batch = 0; // current batch number
     var numBatches = 0; // total number of batches
     var images; // array of images in current batch
@@ -89,9 +95,7 @@ $(document).ready(function () {
 
     function finished() {
         percentElement.html(pwasMsg.complete);
-        //progressBar.attr("value", 100);
         progressBar.val(100);
-        //progressBar1.attr("value", 100);
         progressBar1.val(100);
         progressBar.addClass("done");
         if (!canceled) {
@@ -117,10 +121,11 @@ $(document).ready(function () {
 
         $.ajax({
             url: optimizeUrl + "&id=" + tmp[0] + "&file=" + images[index],
+            type: "POST",
+            data: csrfData,
             dataType: "json",
             success: function (data) {
                 var status = "";
-                error = true;
                 numImages += 1;
                 var c = "pwas-error";
 
@@ -137,11 +142,9 @@ $(document).ready(function () {
                         numFailedImages += 1;
                     } else if (data.skipped) {
                         status = "<span class='status skipped'>" + data.skipped + "</span>";
-                        error = false;
                         c = "";
                     } else if (data.percentNew !== null) {
                         status = "<span class='status percent'>" + data.percentNew + "</span>"; //reduction percentage
-                        error = false;
                         c = "";
                     }
                     resultElement.children().last()
@@ -150,11 +153,8 @@ $(document).ready(function () {
 
                 index += 1; // next item in images
                 var p1 = index / images.length * 100;
-                //progressBar1.attr("value", Math.round(p1));
                 progressBar1.val(Math.round(p1));
-                //var p = (batch / numBatches * 100) + (index * 100 / numBatches / index.length);
                 var p = Math.round((batch / numBatches * 100) + (p1 / numBatches));
-                //progressBar.attr("value", p);
                 progressBar.val(p);
                 percentElement.find("span").html(p);
 
@@ -162,7 +162,6 @@ $(document).ready(function () {
                     processFiles(index);
                 } else {
                     // processing of files finished, start with next batch
-                    //progressBar1.attr("value", 100);
                     progressBar1.val(100);
                     batch += 1;
                     if (batch < numBatches && !canceled) {
@@ -173,12 +172,10 @@ $(document).ready(function () {
                     }
                 }
             },
-            fail: function (jqXHR, textStatus, errorThrown) {
+            error: function (jqXHR, textStatus, errorThrown) {
                 // optimization failed, timeout or some error on PW server? move to the next file anyway
-                error = true;
                 resultElement.children().last().remove()
                     .append("<div class='pwas-error'><span class='faded'>" + tmp[0] + "</span><span class='file'>" + tmp[1] + "</span><span class='status error'>" + pwasMsg.error + " " + jqXHR.status + " (" + errorThrown + ")</span></div>");
-                //progressBar1.attr("value", Math.round(index / images.length * 100));
                 progressBar1.val(Math.round(index / images.length * 100));
 
                 numImages += 1;
@@ -190,7 +187,7 @@ $(document).ready(function () {
                 } else {
                     // processing of files finished, start with next batch
                     batch += 1;
-                    if (batch < numBatches && !canceled) { //batc+1 < numBatches?
+                    if (batch < numBatches && !canceled) { //batch+1 < numBatches?
                         processBatch(batch);
                     } else {
                         finished();
@@ -210,6 +207,8 @@ $(document).ready(function () {
 
         $.ajax({
             url: dataUrl + "&start=" + batch, //edit?name=AutoSmush?&mode=bulk&start=0
+            type: "POST",
+            data: csrfData,
             cache: false,
             dataType: "json",
             success: function (data) { // done
@@ -218,30 +217,38 @@ $(document).ready(function () {
                 resultElement.children().last().replaceWith("<div class='info'><span class='faded'>" + pwasMsg.filelistnum + data.numImages + "</span></div>")
                     .scrollTop(resultElement[0].scrollHeight - resultElement.height());
 
-                // if optimize engine is not selected, just in case someone is fooling arrond
-                if (data && data.error != undefined) {
+                // if optimize engine is not selected, just in case someone is fooling arround
+                if (data?.error != undefined) {
                     resultElement.append("<div class='pwas-error'><span class='status error'>" + pwasMsg.error + " " + data.error + "</span></div>")
                         .scrollTop(resultElement[0].scrollHeight - resultElement.height()); // scroll to bottom;
-                    error = true;
                 }
 
-                if (data && data.counter) {
+                if (data?.counter) {
                     var c = data.counter.replace("{", "<span>").replace("}", "</span>");
                     percentElement.html(c);
                 }
 
-                if (data && data.numImages !== 0 && canceled === false) {
+                // capture the total number of batches from every response, including
+                // empty ones, so the first batch can still be skipped correctly below
+                if (data?.numBatches !== undefined) {
                     numBatches = data.numBatches;
+                }
+
+                if (data && data.numImages !== 0 && canceled === false) {
                     images = data.images;
                     index = 0;
                     processFiles(index);
+                } else if (data?.numImages === 0 && canceled === false && batch + 1 < numBatches) {
+                    // empty batch (e.g. variations-only mode when a page has no variations):
+                    // skip it and continue with the next batch
+                    batch += 1;
+                    processBatch(batch);
                 } else {
                     finished();
                     showReport();
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) { // fail
-                error = true;
                 resultElement.children().last().replaceWith("<div class='pwas-error'><span class='status error'>" + pwasMsg.error + " " + jqXHR.status + " (" + errorThrown + ")</span></div>")
                     .scrollTop(resultElement[0].scrollHeight - resultElement.height());
                 batch += 1;

@@ -1,5 +1,17 @@
 # Changelog
 
+### 2.0.1 (2026-08-17)
+- security: require POST + CSRF token + logged-in user for AJAX endpoints
+- security: require superuser for bulk optimization
+- security: verify page edit permission in onclickOptimize
+- fix: dotted filenames misclassified as variations (getPageimage extension matching)
+- fix: optimizeOnUrl stale variant detection via filemtime comparison
+- fix: unique temp filenames to prevent concurrent request conflicts
+- fix: backup failure now skips optimization instead of proceeding without backup
+- fix: bulk error callback re-enables button when last request fails (AutoSmushPageEdit.js)
+- fix: AJAX error callback key 'fail' → 'error' in bulk processing (AutoSmush.js)
+- docs: correct PHPDoc
+
 ### 2.0.0 (2026-05-04)
 - breaking change: module is namespaced, min PHP 8.1, min PW 3.0.212
 

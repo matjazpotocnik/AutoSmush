@@ -6,6 +6,13 @@
 $(document).ready(function () {
     "use strict";
 
+    // CSRF token for POST requests (standard PW pattern)
+    var $postToken = $("input._post_token");
+    var csrfName = $postToken.attr("name");
+    var csrfValue = $postToken.val();
+    var csrfData = {};
+    csrfData[csrfName] = csrfValue;
+
     $(document).on("click", "button.InputfieldImageOptimize", function () {
         var currentItem = $(this);
         var optUrl = currentItem.attr("data-href");
@@ -14,6 +21,8 @@ $(document).ready(function () {
 
         $.ajax({
             url: optUrl,
+            type: "POST",
+            data: csrfData,
             cache: false,
             success: function (data) {
                 optText.text(" " + data);
@@ -54,12 +63,13 @@ $(document).ready(function () {
 
             $.ajax({
                 url: optUrlAjax,
+                type: "POST",
+                data: csrfData,
                 cache: false,
                 success: function (data) {
                     t.html(th + " <i class='fa fa-angle-double-right'></i> " + data);
                     window.numvariants = window.numvariants - 1;
                     if (window.numvariants === 0) {
-                        //currentItem.attr("disabled", "false").removeClass("ui-state-disabled");
                         currentItem.removeClass("ui-state-disabled");
                         optText.html(optTextHtml); //return previous content
                     }
@@ -68,6 +78,10 @@ $(document).ready(function () {
                 error: function (xhr, textStatus) {
                     t.html(" " + textStatus);
                     window.numvariants = window.numvariants - 1;
+                    if (window.numvariants === 0) {
+                        currentItem.removeClass("ui-state-disabled");
+                        optText.html(optTextHtml);
+                    }
                     return false;
                 }
             });
